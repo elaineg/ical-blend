@@ -92,4 +92,4 @@ MergeCal at $2/mo. Nothing free + hosted + no-signup does merge + filter + busy-
 - ICS line handling: respect folded lines (CRLF + space) when filtering/stripping; emit
   CRLF line endings and fold lines >75 octets per RFC 5545.
 
-Production URL: TBD
+Production URL: https://ical-blend.vercel.app
