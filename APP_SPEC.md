@@ -84,7 +84,11 @@ MergeCal at $2/mo. Nothing free + hosted + no-signup does merge + filter + busy-
 - Upstream fetches: ~8 s timeout, ~1 MB size cap per source, send a User-Agent like
   `ical-blend/1.0 (+https://<host>)`. Accept and normalize `webcal://` to `https://`.
 - Set `Cache-Control: public, s-maxage=300, stale-while-revalidate=600` on the feed route
-  so calendar clients and Vercel's edge don't hammer source feeds.
+  so calendar clients and Vercel's edge don't hammer source feeds. Also set
+  `Vercel-CDN-Cache-Control` with the same value: Vercel's CDN otherwise consumes
+  `s-maxage`/`stale-while-revalidate` and strips them from the client-visible
+  `Cache-Control`; the dedicated CDN header makes Vercel forward the original
+  `Cache-Control` to clients untouched.
 - ICS line handling: respect folded lines (CRLF + space) when filtering/stripping; emit
   CRLF line endings and fold lines >75 octets per RFC 5545.
 

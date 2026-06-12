@@ -261,8 +261,9 @@ export default function Home() {
             <h3 className="font-semibold">Subscribe</h3>
             <ul className="mt-2 list-disc space-y-1 pl-5">
               <li>
-                <span className="font-medium">Google Calendar:</span> Other
-                calendars → + → &ldquo;From URL&rdquo; → paste the feed URL.
+                <span className="font-medium">Google Calendar:</span>{" "}
+                Other calendars → + → &ldquo;From URL&rdquo; → paste the feed
+                URL.
               </li>
               <li>
                 <span className="font-medium">Apple Calendar:</span> open the

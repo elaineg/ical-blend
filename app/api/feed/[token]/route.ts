@@ -59,6 +59,13 @@ export async function GET(
       "Content-Type": "text/calendar; charset=utf-8",
       "Content-Disposition": 'inline; filename="ical-blend.ics"',
       "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+      // Vercel's CDN consumes s-maxage/stale-while-revalidate from
+      // Cache-Control and strips them from the client response. Giving the
+      // CDN its own directive makes Vercel use this header for edge caching
+      // and forward the original Cache-Control to clients untouched
+      // (spec success check 7: clients must see s-maxage >= 300).
+      "Vercel-CDN-Cache-Control":
+        "public, s-maxage=300, stale-while-revalidate=600",
     },
   });
 }

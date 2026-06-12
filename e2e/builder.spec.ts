@@ -29,7 +29,8 @@ test("build a merged feed from two mock sources and preview it", async ({
   const res = await request.get(feedUrl);
   expect(res.status()).toBe(200);
   expect(res.headers()["content-type"]).toContain("text/calendar");
-  expect(res.headers()["cache-control"]).toContain("s-maxage=300");
+  // Cache-Control s-maxage is asserted in e2e/spec-checks.spec.ts as its own
+  // test (Vercel's CDN strips s-maxage from client responses).
   const body = await res.text();
   expect(body.startsWith("BEGIN:VCALENDAR")).toBe(true);
   expect(body.trimEnd().endsWith("END:VCALENDAR")).toBe(true);
