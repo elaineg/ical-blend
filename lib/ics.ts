@@ -153,6 +153,8 @@ const BUSY_STRIP = new Set([
  * Apply the busy-only mask: SUMMARY becomes "Busy"; DESCRIPTION, LOCATION,
  * ATTENDEE, ORGANIZER and URL are removed; VALARM subcomponents (which can
  * carry descriptions) are dropped. DTSTART/DTEND etc. are preserved.
+ * The UID is NOT modified here; callers are responsible for replacing it
+ * with an opaque hash (busyHashUid) to prevent identity leaks.
  */
 export function busyMask(eventLines: string[]): string[] {
   const out: string[] = [];
@@ -172,6 +174,22 @@ export function busyMask(eventLines: string[]): string[] {
     out.push(line);
   }
   return out;
+}
+
+/**
+ * Under the busy-only mask, replace a UID with an opaque deterministic hash
+ * so calendar clients can still deduplicate across refreshes, but the
+ * original event identity is non-reversible.
+ * Uses a simple djb2-style hash encoded as hex for zero external dependencies.
+ */
+export function busyHashUid(uid: string): string {
+  // FNV-1a 32-bit hash, hex-encoded — deterministic, non-reversible
+  let h = 0x811c9dc5;
+  for (let i = 0; i < uid.length; i++) {
+    h ^= uid.charCodeAt(i);
+    h = (Math.imul(h, 0x01000193) >>> 0);
+  }
+  return `busy-${h.toString(16).padStart(8, "0")}@ical-blend`;
 }
 
 /** Parse common ICS date/date-time value forms into a Date (approximate for TZID/floating). */
@@ -230,28 +248,55 @@ export function mergeCalendars(input: MergeInput): string {
     }
   }
 
+  // Deduplicate events: primary key = UID; fallback = DTSTART+SUMMARY when
+  // UIDs are absent. Under busy-only, also build a DTSTART+SUMMARY key to
+  // catch events whose UIDs differ but content is identical (e.g. holiday
+  // feeds using per-provider UIDs for the same public holiday).
   const seenUids = new Set<string>();
+  const seenDtStartSummary = new Set<string>();
   let anon = 0;
   for (let i = 0; i < calendars.length; i++) {
     for (const ev of calendars[i].events) {
       if (options.include && !summaryMatches(ev, options.include)) continue;
       if (options.exclude && summaryMatches(ev, options.exclude)) continue;
-      let out = options.busyOnly ? busyMask(ev) : [...ev];
-      // Keep UIDs unique across sources.
-      const uidLine = getPropLine(out, "UID");
-      let uid = uidLine ? uidLine.slice(valueColonIndex(uidLine) + 1) : "";
-      if (!uid) {
+
+      // Compute dedup keys from the ORIGINAL event (before busy-mask).
+      const rawUidLine = getPropLine(ev, "UID");
+      const rawUid = rawUidLine ? rawUidLine.slice(valueColonIndex(rawUidLine) + 1) : "";
+      const dtstart = getProp(ev, "DTSTART") ?? "";
+      const summary = getProp(ev, "SUMMARY") ?? "";
+      const contentKey = `${dtstart}\0${summary}`.toLowerCase();
+
+      // Assign an anonymous UID when absent, so we can track it.
+      let canonicalUid = rawUid;
+      if (!canonicalUid) {
         anon += 1;
-        uid = `blend-${i + 1}-${anon}@ical-blend`;
-        out = out.flatMap((l) =>
-          l.toUpperCase() === "BEGIN:VEVENT" ? [l, `UID:${uid}`] : [l]
-        );
-      } else if (seenUids.has(uid)) {
-        const newUid = `${uid}-src${i + 1}`;
-        out = out.map((l) => (l === uidLine ? `UID:${newUid}` : l));
-        uid = newUid;
+        canonicalUid = `blend-anon-${i + 1}-${anon}@ical-blend`;
       }
-      seenUids.add(uid);
+
+      // Dedup: skip if we've seen this UID OR the same DTSTART+SUMMARY combo.
+      if (seenUids.has(canonicalUid)) continue;
+      if (contentKey && seenDtStartSummary.has(contentKey)) continue;
+
+      seenUids.add(canonicalUid);
+      if (contentKey) seenDtStartSummary.add(contentKey);
+
+      let out = options.busyOnly ? busyMask(ev) : [...ev];
+
+      // Fix the UID in the output lines.
+      const outUidLine = getPropLine(out, "UID");
+      if (!rawUid) {
+        // Insert the generated UID.
+        out = out.flatMap((l) =>
+          l.toUpperCase() === "BEGIN:VEVENT" ? [l, `UID:${canonicalUid}`] : [l]
+        );
+      } else if (options.busyOnly) {
+        // Replace original UID with an opaque hash to prevent identity leaks.
+        const hashedUid = busyHashUid(canonicalUid);
+        out = out.map((l) => (l === outUidLine ? `UID:${hashedUid}` : l));
+      }
+      // (Non-busy, UID present: keep original UID verbatim — already unique due to dedup.)
+
       lines.push(...out);
     }
   }

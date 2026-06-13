@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  busyHashUid,
   busyMask,
   escapeText,
   foldLine,
@@ -48,6 +49,8 @@ const CAL_A = [
   "END:VCALENDAR",
 ].join("\r\n");
 
+// CAL_B has a unique event (Piano lesson) plus a duplicate of CAL_A's
+// "Planning" event (shared@example.com) to test cross-source deduplication.
 const CAL_B = [
   "BEGIN:VCALENDAR",
   "VERSION:2.0",
@@ -61,13 +64,19 @@ const CAL_B = [
   "END:STANDARD",
   "END:VTIMEZONE",
   "BEGIN:VEVENT",
-  "UID:shared@example.com",
+  "UID:b-piano@example.com",
   "DTSTAMP:20260601T000000Z",
   "DTSTART:20270618T170000Z",
   "SUMMARY:Piano lesson",
   "ATTENDEE;CN=Kid:mailto:kid@example.com",
   "ORGANIZER;CN=Teacher:mailto:t@example.com",
   "URL:https://music-school.example.com",
+  "END:VEVENT",
+  "BEGIN:VEVENT",
+  "UID:shared@example.com",
+  "DTSTAMP:20260601T000000Z",
+  "DTSTART:20270620T100000Z",
+  "SUMMARY:Planning",
   "END:VEVENT",
   "END:VCALENDAR",
 ].join("\r\n");
@@ -125,15 +134,20 @@ describe("mergeCalendars", () => {
     expect(out.replace(/\r\n/g, "")).not.toContain("\n");
   });
 
-  it("dedupes VTIMEZONEs by TZID and keeps UIDs unique", () => {
+  it("dedupes VTIMEZONEs by TZID and deduplicates events by UID across sources", () => {
     const out = mergeCalendars({ calendars: [calA, calB], options: {} });
     expect(out.match(/BEGIN:VTIMEZONE/g)).toHaveLength(1);
     const uids = unfold(out)
       .filter((l) => l.startsWith("UID"))
       .map((l) => l.slice(l.indexOf(":") + 1));
+    // calA: a-1@example.com, shared@example.com (Planning)
+    // calB: b-piano@example.com (Piano lesson), shared@example.com (Planning — duplicate, dropped)
+    // Result: 3 unique UIDs, shared@example.com appears only once.
     expect(new Set(uids).size).toBe(uids.length);
+    expect(uids).toContain("a-1@example.com");
     expect(uids).toContain("shared@example.com");
-    expect(uids).toContain("shared@example.com-src2");
+    expect(uids).toContain("b-piano@example.com");
+    expect(uids).toHaveLength(3);
   });
 
   it("exclude filter removes matching events case-insensitively", () => {
@@ -193,6 +207,43 @@ describe("busyMask", () => {
     expect(masked).toContain("SUMMARY:Busy");
     expect(masked.filter((l) => l.startsWith("SUMMARY"))).toHaveLength(1);
   });
+
+  it("replaces UIDs with opaque hashes under busy-only mask", () => {
+    const out = mergeCalendars({
+      calendars: [calA, parseCalendar(CAL_B)],
+      options: { busyOnly: true },
+    });
+    const lines = unfold(out);
+    const uidLines = lines.filter((l) => l.startsWith("UID:"));
+    // No original UIDs should appear in the output.
+    for (const u of uidLines) {
+      expect(u).not.toContain("a-1@example.com");
+      expect(u).not.toContain("shared@example.com");
+      // Should be our opaque hash pattern.
+      expect(u).toMatch(/^UID:busy-[0-9a-f]{8}@ical-blend$/);
+    }
+    // UIDs are still unique (stable per event).
+    const uids = uidLines.map((l) => l.slice(4));
+    expect(new Set(uids).size).toBe(uids.length);
+  });
+});
+
+describe("busyHashUid", () => {
+  it("returns a stable opaque hash for the same input", () => {
+    const uid = "ChristmasDay@gov.uk";
+    expect(busyHashUid(uid)).toBe(busyHashUid(uid));
+    expect(busyHashUid(uid)).toMatch(/^busy-[0-9a-f]{8}@ical-blend$/);
+  });
+
+  it("returns different hashes for different inputs", () => {
+    expect(busyHashUid("uid-A@example.com")).not.toBe(busyHashUid("uid-B@example.com"));
+  });
+
+  it("does not contain the original UID value", () => {
+    const original = "ChristmasDay@gov.uk";
+    expect(busyHashUid(original)).not.toContain("Christmas");
+    expect(busyHashUid(original)).not.toContain("gov.uk");
+  });
 });
 
 describe("dates and text escaping", () => {
@@ -217,10 +268,44 @@ describe("upcomingEvents", () => {
       options: {},
     });
     const events = upcomingEvents(out, 10);
+    // calA: Daily Standup (Jun 15), Planning (Jun 20)
+    // calB: Piano lesson (Jun 18), Planning again (deduped out)
+    // Result: 3 events, sorted by date.
     expect(events.length).toBe(3);
     expect(events[0].summary).toBe("Daily Standup");
     expect(events[1].summary).toBe("Piano lesson");
+    expect(events[2].summary).toBe("Planning");
     const times = events.map((e) => (e.start ? Date.parse(e.start) : 0));
     expect([...times].sort((a, b) => a - b)).toEqual(times);
+  });
+
+  it("deduplicates events with same DTSTART+SUMMARY when UIDs differ", () => {
+    // Two cals where same event has different UIDs but identical DTSTART+SUMMARY
+    const calDup1 = [
+      "BEGIN:VCALENDAR",
+      "BEGIN:VEVENT",
+      "UID:ev-source-1@a.com",
+      "DTSTART:20270701T100000Z",
+      "SUMMARY:Team Meeting",
+      "END:VEVENT",
+      "END:VCALENDAR",
+    ].join("\r\n");
+    const calDup2 = [
+      "BEGIN:VCALENDAR",
+      "BEGIN:VEVENT",
+      "UID:ev-source-2@b.com",
+      "DTSTART:20270701T100000Z",
+      "SUMMARY:Team Meeting",
+      "END:VEVENT",
+      "END:VCALENDAR",
+    ].join("\r\n");
+    // Different UIDs but same DTSTART+SUMMARY — should deduplicate.
+    const out = mergeCalendars({
+      calendars: [parseCalendar(calDup1), parseCalendar(calDup2)],
+      options: {},
+    });
+    const outEvents = upcomingEvents(out, 10);
+    expect(outEvents.length).toBe(1);
+    expect(outEvents[0].summary).toBe("Team Meeting");
   });
 });

@@ -18,8 +18,14 @@ describe("validateConfig", () => {
     expect(r.config?.sources[0]).toBe("https://a.example.com/cal.ics");
   });
 
-  it("rejects fewer than 2 sources (blank entries ignored)", () => {
-    expect(validateConfig({ sources: [twoUrls[0], "  "] }).ok).toBe(false);
+  it("accepts a single valid source URL", () => {
+    const r = validateConfig({ sources: [twoUrls[0]] });
+    expect(r.ok).toBe(true);
+    expect(r.config?.sources).toHaveLength(1);
+  });
+
+  it("rejects empty sources (blank entries ignored)", () => {
+    expect(validateConfig({ sources: ["  "] }).ok).toBe(false);
     expect(validateConfig({ sources: [] }).ok).toBe(false);
   });
 
@@ -28,7 +34,7 @@ describe("validateConfig", () => {
       sources: Array.from({ length: 6 }, (_, i) => `https://h${i}.example.com/c.ics`),
     });
     expect(r.ok).toBe(false);
-    expect(r.error).toMatch(/between 2 and 5/);
+    expect(r.error).toMatch(/up to 5/);
   });
 
   it("rejects non-http(s) schemes and invalid URLs", () => {
@@ -37,6 +43,18 @@ describe("validateConfig", () => {
     expect(
       validateConfig({ sources: ["javascript:alert(1)", twoUrls[1]] }).ok
     ).toBe(false);
+  });
+
+  it("rejects localhost, link-local, and private addresses (SSRF guard)", () => {
+    const check = (url: string) =>
+      validateConfig({ sources: [url, twoUrls[1]] }).ok;
+    expect(check("http://localhost/cal.ics")).toBe(false);
+    expect(check("http://127.0.0.1/cal.ics")).toBe(false);
+    expect(check("http://0.0.0.0/cal.ics")).toBe(false);
+    expect(check("http://myserver.local/cal.ics")).toBe(false);
+    expect(check("http://169.254.1.1/cal.ics")).toBe(false);
+    expect(check("http://192.168.1.100/cal.ics")).toBe(false);
+    expect(check("http://10.0.0.1/cal.ics")).toBe(false);
   });
 
   it("rejects oversized URLs and filters", () => {

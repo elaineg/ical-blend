@@ -8,7 +8,7 @@ export interface BlendConfig {
   busyOnly?: boolean;
 }
 
-export const MIN_SOURCES = 2;
+export const MIN_SOURCES = 1;
 export const MAX_SOURCES = 5;
 export const MAX_URL_LENGTH = 500;
 export const MAX_FILTER_LENGTH = 100;
@@ -39,7 +39,9 @@ export function validateConfig(input: unknown): ValidationResult {
   if (rawSources.length < MIN_SOURCES || rawSources.length > MAX_SOURCES) {
     return {
       ok: false,
-      error: `Provide between ${MIN_SOURCES} and ${MAX_SOURCES} source URLs (got ${rawSources.length}).`,
+      error: rawSources.length === 0
+        ? "Add at least one calendar feed URL to get started."
+        : `Provide up to ${MAX_SOURCES} source URLs (got ${rawSources.length}).`,
     };
   }
 
@@ -53,12 +55,34 @@ export function validateConfig(input: unknown): ValidationResult {
     try {
       url = new URL(normalized);
     } catch {
-      return { ok: false, error: `Not a valid URL: ${raw.slice(0, 80)}` };
+      return {
+        ok: false,
+        error: `That doesn't look like a calendar feed URL (needs to start with https:// or webcal://): ${raw.slice(0, 80)}`,
+      };
     }
     if (url.protocol !== "https:" && url.protocol !== "http:") {
       return {
         ok: false,
-        error: `Unsupported URL scheme "${url.protocol}//" — use http(s) or webcal.`,
+        error: `That doesn't look like a calendar feed URL (needs to start with https:// or webcal://): ${raw.slice(0, 80)}`,
+      };
+    }
+    // Block localhost, link-local, and .local addresses (SSRF guard).
+    const h = url.hostname.toLowerCase();
+    if (
+      h === "localhost" ||
+      h === "127.0.0.1" ||
+      h === "0.0.0.0" ||
+      h === "[::1]" ||
+      h.endsWith(".local") ||
+      /^169\.254\./.test(h) ||        // IPv4 link-local
+      /^fe80:/i.test(h) ||             // IPv6 link-local
+      /^10\./.test(h) ||               // RFC1918
+      /^192\.168\./.test(h) ||         // RFC1918
+      /^172\.(1[6-9]|2\d|3[01])\./.test(h) // RFC1918
+    ) {
+      return {
+        ok: false,
+        error: `Local or private addresses aren't allowed as calendar sources: ${raw.slice(0, 80)}`,
       };
     }
     sources.push(url.toString());

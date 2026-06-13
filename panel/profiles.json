@@ -1,0 +1,105 @@
+{
+  "_source": "lib/personas/roster.json — 2026-06-12 ICP reorientation roster (canonical 10). Motivation field added per persona for ical-blend (merge 2–5 ICS feeds into one subscribable feed, keyword filters, busy-only privacy mask, no account).",
+  "personas": [
+    {
+      "id": 1,
+      "name": "Priya",
+      "role": "Senior backend software engineer",
+      "tech": "high",
+      "device": "desktop, large monitor, keyboard-first",
+      "stack": "terminal + neovim, GitHub, Kubernetes dashboards, Datadog, Linear, Slack",
+      "temperament": "skeptical of new tools; hates signups; will inspect network tab if suspicious; abandons anything slower than a CLI",
+      "motivation": "Subscribes to an on-call/PagerDuty rotation ICS plus her team's release-calendar feed plus personal — wants them merged into one calendar in her terminal-adjacent life without a login, and will check the network tab to confirm nothing is stored."
+    },
+    {
+      "id": 2,
+      "name": "Marcus",
+      "role": "Frontend engineer, 2 years in",
+      "tech": "high",
+      "device": "desktop, Chrome with devtools open",
+      "stack": "VS Code, GitHub, Vercel, Figma dev mode, Storybook, Discord/Slack",
+      "temperament": "enthusiastic early adopter; shares tools in team Slack when impressed; notices janky CSS instantly",
+      "motivation": "Wants his GitHub sprint/milestone ICS feed merged with his personal Google Calendar and a meetup feed, filtered to drop noisy all-day events — would share a slick no-signup tool in team Slack."
+    },
+    {
+      "id": 3,
+      "name": "Wen",
+      "role": "Marketing data analyst",
+      "tech": "high-medium",
+      "device": "desktop, two monitors",
+      "stack": "BigQuery/SQL, Google Sheets, Looker Studio, dbt, GA4, Slack",
+      "temperament": "lives in data hygiene; distrusts tools that transform data invisibly; wants CSV in/out everywhere",
+      "motivation": "Juggles a campaign-launch calendar feed, a data-pipeline/dbt-run schedule feed, and personal — wants one merged subscribable feed but distrusts invisible transforms, so she'll scrutinize whether the merged feed faithfully preserves every event."
+    },
+    {
+      "id": 4,
+      "name": "Tomás",
+      "role": "Operations analyst at a mid-size company",
+      "tech": "medium",
+      "device": "corporate Windows laptop, Edge",
+      "stack": "Excel (power user), Tableau, Jira, Teams, SharePoint",
+      "temperament": "pragmatic; IT blocks installs so browser tools appeal; wary of pasting company data into random sites",
+      "motivation": "Needs his Teams/Outlook work calendar feed merged with a shared facilities/shift feed, but is wary of pasting an internal feed URL into a random site — the busy-only privacy mask is exactly what would let him hand a stripped version to a vendor."
+    },
+    {
+      "id": 5,
+      "name": "Dana",
+      "role": "Demand-gen marketer",
+      "tech": "medium",
+      "device": "MacBook in cafes; phone between meetings",
+      "stack": "HubSpot, GA4, Notion, Canva, LinkedIn Campaign Manager, Google Ads",
+      "temperament": "ruthless about time; if value isn't obvious in one scroll she's gone; screenshots tools she likes for the team channel",
+      "motivation": "Wants her webinar/event calendar feed and HubSpot campaign-milestone feed merged into one she can subscribe to on her phone — if the value isn't obvious in one scroll she's gone."
+    },
+    {
+      "id": 6,
+      "name": "Jules",
+      "role": "Content & community marketer",
+      "tech": "medium",
+      "device": "50/50 desktop and mobile",
+      "stack": "Notion, Buffer, Mailchimp, Figma (consuming), X/LinkedIn/Mastodon, Discord",
+      "temperament": "posts constantly, juggles platform quirks daily; allergic to anything requiring a login for a small job",
+      "motivation": "Subscribes to several community-event ICS feeds (Discord events, Luma, a newsletter calendar) and wants them merged + keyword-filtered into one — allergic to logging in for a small job like this."
+    },
+    {
+      "id": 7,
+      "name": "Aisha",
+      "role": "Product designer",
+      "tech": "medium-high",
+      "device": "desktop, big display, trackpad",
+      "stack": "Figma, FigJam, Notion, Loom, Maze, Slack",
+      "temperament": "judges craft hard — spacing, copy tone, empty states; a clumsy UI loses her regardless of utility; advocates loudly for tools that feel considered",
+      "motivation": "Combines a personal Google Calendar, a partner's shared calendar, and a kids'-school ICS into one family feed — but judges the builder UI's craft (copy, empty states, instructions clarity) hard, and a clumsy flow loses her regardless of utility."
+    },
+    {
+      "id": 8,
+      "name": "Rob",
+      "role": "Brand/visual designer, freelance",
+      "tech": "medium",
+      "device": "desktop, color-calibrated monitor",
+      "stack": "Figma, Illustrator, Photoshop, Google Drive, client Slacks/emails",
+      "temperament": "does repetitive asset-prep grunt work weekly; price-sensitive; compares everything to 'I could do this in Photoshop in 4 minutes'",
+      "motivation": "Freelance — wants his several client booking/project ICS feeds merged into one availability calendar, and would use the busy-only mask to share availability with a new client without leaking client names."
+    },
+    {
+      "id": 9,
+      "name": "Elena",
+      "role": "Engineering manager (8 reports)",
+      "tech": "medium-high but no time",
+      "device": "laptop + phone, half the day in meetings",
+      "stack": "Google Calendar (wall-to-wall), Slack, Linear, Google Docs, Zoom, dashboards she skims",
+      "temperament": "30-second patience budget; uses tools between meetings on her phone; anything requiring setup is dead to her; recommends tools that save her reports time",
+      "motivation": "Lives in a wall-to-wall Google Calendar; wants her team's on-call feed, a recruiting-interview feed, and personal merged into one phone subscription — has a 30-second patience budget and anything requiring setup is dead to her."
+    },
+    {
+      "id": 10,
+      "name": "Sam",
+      "role": "Product manager",
+      "tech": "medium",
+      "device": "mobile-heavy between meetings, laptop otherwise",
+      "stack": "Notion, Sheets, Slack, Zoom, Asana, Amplitude (skims), endless browser tabs",
+      "temperament": "synthesizes and shares constantly — exports, links, screenshots; values anything that makes him look organized; mild tech confidence, won't debug anything",
+      "motivation": "Wants his Asana milestone feed, a release calendar, and personal merged into one subscribable link he can share — values anything that makes him look organized, but won't debug anything if it doesn't just work."
+    }
+  ]
+}

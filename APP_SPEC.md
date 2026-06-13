@@ -15,24 +15,29 @@ MergeCal at $2/mo. Nothing free + hosted + no-signup does merge + filter + busy-
 
 ## Core flows
 
-1. **Build a merged feed.** On the single-page builder, paste 2–5 ICS feed URLs (http/https
+1. **Build a merged feed.** On the single-page builder, paste 1–5 ICS feed URLs (http/https
    or webcal://), optionally set include-keyword and/or exclude-keyword filters (matched
    case-insensitively against event SUMMARY), and optionally toggle "busy-only privacy
    mask" (every event's SUMMARY becomes "Busy"; DESCRIPTION, LOCATION, ATTENDEE, and
-   ORGANIZER are removed). Clicking "Create feed" produces the merged feed URL with a copy
-   button, a matching `webcal://` variant, and one-line subscribe instructions for Google
-   Calendar and Apple Calendar. The entire config (source URLs + options) is
-   deflate-compressed, encrypted server-side with AES-256-GCM using a key from the
-   `ENCRYPTION_KEY` env var, and base64url-encoded into a single URL path segment — nothing
-   is stored anywhere.
+   ORGANIZER are removed). Empty/malformed/localhost/link-local/non-http(s) URLs are
+   rejected with inline messages. Clicking "Create feed" produces the merged feed URL
+   with a copy button (showing "Copied!" on click), a matching `webcal://` variant, a
+   one-tap "Add to Google Calendar" button, and subscribe instructions for Google
+   Calendar, Apple Calendar, and Outlook/Office 365. A confirmation banner shows the
+   merged event count and any per-source fetch failures at create time. The entire config
+   (source URLs + options) is deflate-compressed, encrypted server-side with AES-256-GCM
+   using a key from the `ENCRYPTION_KEY` env var, and base64url-encoded into a single URL
+   path segment — nothing is stored anywhere.
 2. **The merged feed itself (the product).** `GET /api/feed/<token>` decrypts the token,
    fetches all source feeds in parallel (timeout and size cap per source, custom
    User-Agent), merges their VEVENTs into one valid `text/calendar` response (single
-   VCALENDAR, VTIMEZONEs preserved/deduped, UIDs kept or made unique across sources),
-   applies the keyword filters and busy mask, and returns it with
-   `Cache-Control: public, s-maxage=300, stale-while-revalidate=600`. If one source fails
-   to fetch, the remaining sources still merge and the response includes an all-day
-   marker event "iCal Blend: 1 source failed" rather than erroring.
+   VCALENDAR, VTIMEZONEs preserved/deduped, VEVENTs deduplicated by UID with a
+   DTSTART+SUMMARY fallback), applies the keyword filters and busy mask, and returns it
+   with `Cache-Control: public, s-maxage=300, stale-while-revalidate=600`. Under
+   busy-only mask, UIDs are replaced with opaque deterministic hashes to prevent identity
+   leaks. If one source fails to fetch, the remaining sources still merge and the
+   response includes an all-day marker event "iCal Blend: 1 source failed" rather than
+   erroring.
 3. **Preview before subscribing.** After "Create feed", the builder page shows the next
    ~10 upcoming events from the merged result (title, date/time, which filters/mask
    applied) so the user can confirm the filters and mask did what they expect before
@@ -72,7 +77,7 @@ MergeCal at $2/mo. Nothing free + hosted + no-signup does merge + filter + busy-
 - OAuth'd calendar APIs (Google Calendar API, Microsoft Graph) — ICS URLs only.
 - Filtering on fields other than SUMMARY; regex filters.
 - Rate limiting beyond basic per-request upstream caps; custom branding; custom refresh
-  intervals; dedup of identical events across sources.
+  intervals.
 
 ## Notes for builder
 
