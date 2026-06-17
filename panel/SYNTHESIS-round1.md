@@ -1,80 +1,60 @@
-# iCal Blend — Panel Synthesis, Round 1
+# iCal Blend — Panel SYNTHESIS Round 1
 
-App: ical-blend · URL: https://ical-blend.vercel.app · Run: 20260612-211511-daily
+Feature under test: PER-FEED rules (per-row "Options" disclosure → title PREFIX, "Mask this feed's titles", "Hide all-day events from this feed"), alongside the pre-existing GLOBAL "Busy-only privacy mask" + global keyword filters.
 
-## Score table
+App: http://localhost:3000 (local prod build). 10/10 testers ran cold in a real browser.
 
-| # | Persona | Role | Clarity | Value | Advocacy |
-|---|---------|------|---------|-------|----------|
-| 1 | Priya | Sr backend engineer | Yes | Yes | 8 |
-| 2 | Marcus | Frontend engineer | Yes | Yes | 8 |
-| 3 | Wen | Marketing data analyst | Yes | Yes | 8 |
-| 4 | Tomás | Operations analyst | Yes | Yes | 8 |
-| 5 | Dana | Demand-gen marketer | Yes | Yes | 7 |
-| 6 | Jules | Content/community marketer | Yes | Yes | 8 |
-| 7 | Aisha | Product designer | Yes | Yes | 7 |
-| 8 | Rob | Brand/visual designer | Yes | Yes | 8 |
-| 9 | Elena | Engineering manager | Yes | Yes | 8 |
-| 10 | Sam | Product manager | Yes | Yes | 8 |
+## Audience-weighted bar (declared)
 
-**Exit condition (≥9 testers at advocacy ≥9, clarity=Yes, value=Yes): NOT MET.**
-Clarity & value are unanimous Yes — the product is legible and wanted. Every shortfall is
-on advocacy (all 7–8). No one is below 7; this is a polish-gap, not a product-fit gap. The
-core engine is sound: testers independently curl-verified faithful merge (177 VEVENTs, zero
-dropped), working include/exclude keyword filters, a genuine server-side busy-only mask, a
-valid cacheable ICS response, and a confirmed no-login/no-storage stateless design.
+In-audience = anyone who juggles MULTIPLE calendar feeds and would consult a merged feed regularly (most knowledge workers: devs, PMs, analysts, ops, managers, marketers, parents juggling work+personal+kids).
+Non-fit = someone who realistically uses ONE calendar / has no merge need (per-feed rules don't apply).
+**PASS BAR = every IN-AUDIENCE persona advocates at 9+.** Non-fit personas report scores but don't gate.
 
-## Complaints grouped by cause (every advocacy <9 driver)
+All 10 personas are IN-AUDIENCE: every one was given a real multi-feed merge motivation (on-call+release+personal, sprint+personal+meetup, campaign+pipeline+personal, work+facilities, webinar+campaign, community feeds, family calendars, client booking feeds, on-call+recruiting+personal, Asana+release+personal). There are no non-fit personas this round.
 
-### A. Copy button gives NO feedback — RECURRING (4 testers: Dana 7, Aisha 7, Elena 8, Sam 8)
-The "Copy" button copies to clipboard but shows no "Copied!" state. Two of the three lowest
-scorers (both 7s) named this. Highest-leverage single fix — touches both holdouts.
+## Per-persona table
 
-### B. No deduplication of identical events across overlapping feeds — RECURRING (4 testers: Marcus 8, Dana 7, Jules 8, Sam 8)
-When two source feeds contain the same event, the merged feed shows it twice (and twice as
-"Busy" under the mask). Jules's community-calendar use case is *defined* by overlapping
-feeds; Sam saw "duplicate events in the preview." A merge tool that doesn't dedupe undercuts
-its own core promise. Dedupe by UID (and by DTSTART+SUMMARY fallback when UIDs differ).
+| Persona | In-audience? | Advocacy | Value clear <30s | Biggest blocker |
+|---------|:---:|:---:|:---:|---|
+| Priya (backend eng)   | yes | 8 | yes | Google-hosted ICS feeds silently land in "could not be fetched" bucket on 429 throttle; no reason/retry messaging |
+| Marcus (frontend eng) | yes | 8 | yes | Per-source fetch-failure message gives no reason/status code (429 reads as app breakage) |
+| Wen (data analyst)    | yes | 6 | yes | **Cross-feed de-dup silently drops same-date+same-title events with no disclosure; dedup survivor keeps feed-1 transform, so a MASKED feed can LEAK a readable title** |
+| Tomás (ops analyst)   | yes | 8 | yes | No explicit promise the pasted SOURCE feed URL isn't logged/stored server-side (only output config is reassured) |
+| Dana (demand-gen mktr)| yes | 6 | yes | Per-feed "Options" disclosure is grey 11px text + tiny triangle — easy to miss; best feature stays near-invisible |
+| Jules (community mktr) | yes | 8 | yes | None blocking; ~200-char opaque feed URL feels unwieldy/sketchy to share |
+| Aisha (product designer)| yes | 8 | yes | Masking a feed silently discards its prefix → multiple masked feeds collapse to identical untagged "Busy" rows (can't tell them apart) |
+| Rob (brand designer)  | yes | 8 | yes | No way to name/label or recall which opaque feed link went to which client |
+| Elena (eng manager)   | yes | 8 | yes | Row 1 ships PREFILLED with a dummy googleapis feed URL → "is this mine or a sample?" pause + clear-field step (costs 30s-budget users) |
+| Sam (PM)              | yes | 9 | yes | Long opaque feed URL looks fragile/intimidating to share on mobile (minor) |
 
-### C. Busy-only mask leaks identity via passthrough UID — RECURRING (2 testers: Tomás 8, Rob 8)
-Both privacy-mask personas independently caught it: the mask strips SUMMARY/DESCRIPTION/
-LOCATION/ATTENDEE/ORGANIZER but passes the original `UID` verbatim (e.g.
-`...ChristmasDay@gov.uk`), which leaks the very event identity the mask exists to hide.
-Both said this is the *one* fix between 8 and 9–10. Under busy-only, replace UID with an
-opaque deterministic hash.
+In-audience PASS count: **1/10 at 9+** (only Sam). Mean advocacy 7.7.
 
-### D. No create-time validation / confirmation — silent on bad or empty input (3 testers: Aisha 7, Wen 8, Priya 8)
-- Aisha: empty submit is silently ignored (no message); an "orphaned error message" lingers.
-- Wen: a bad/unreachable source URL still builds a feed with no create-time warning, and there's
-  no merged-event-count confirmation so she can't trust the merge happened.
-- Priya: accepts localhost/link-local/`.local` URLs and non-calendar sources without rejection
-  (also a mild SSRF smell to a security-minded engineer).
-Fix: validate URLs on submit (reject empty, malformed, link-local/localhost), block obviously
-non-http(s) sources, and show a post-create confirmation with the merged event count + any
-per-source failures surfaced at build time (not only inside the feed).
+## Dominant blockers, ranked by how many testers hit them
 
-### E. No one-tap "Add to Google Calendar" + missing Outlook instructions (2 testers: Elena 8, Sam 8)
-Elena (mobile, 30s budget) wants a one-tap add button instead of copy-paste subscribe steps.
-Sam wants Outlook/Office365 instructions alongside Google/Apple. Convenience, mobile-weighted.
+1. **Opaque/unwieldy feed URL — no naming/labeling/recall (4: Jules, Rob, Sam, + Elena adjacent).** The ~200-char token reads as fragile/sketchy to share and can't be told apart from other links you've handed out. Caps multiple 8s at sub-9.
+2. **Per-feed Options discoverability — disclosure is visually faint (2 directly: Dana, + a watch-item across others).** Dana (6) calls the grey 11px + tiny triangle the reason the differentiator stays invisible. Note: most testers DID find Options instantly, so this is a strength-with-a-soft-spot, not a universal miss. The FRICTION-WATCH "added-feature-buried" risk did NOT materialize for most; Dana is the outlier and she's the most time-ruthless persona.
+3. **Per-feed-mask correctness defects — two distinct, genuine bugs (2: Wen, Aisha).**
+   - Wen: cross-feed de-dup (same date + same title) silently drops events AND lets the dedup survivor carry feed-1's transform, so a masked feed's title can leak as a readable title on a shared date. This is a privacy-mask correctness bug, not cosmetic.
+   - Aisha: a masked feed discards its own prefix, so multiple masked feeds collapse into indistinguishable "Busy" rows (no "[Partner] Busy"). Provenance lost.
+4. **Per-source fetch-failure messaging is silent/unexplained (2: Priya, Marcus).** A 429-throttled (Google-hosted) feed lands in the failure bucket with no status/reason; reads as app breakage and the summary still counts it as "labelled/merged" (counts intent, not reality).
+5. **"Creating…" hang with no progress / timeout on slow or failing upstream (4: Priya, Wen, Tomás, + implied).** Several-second spinner with no progress; on a 429/slow feed it can appear hung indefinitely.
+6. **Source-URL privacy reassurance gap (1, but high-signal for the privacy use case: Tomás).** The data-wary persona whose KEY use case is the mask won't paste an internal feed without an explicit "we don't store your source URL" promise.
+7. **Onboarding friction — row 1 prefilled with a dummy URL (1: Elena).** Forces a "mine or sample?" pause + clear step before pasting.
 
-### F. Single-feed silent no-op (1 tester: Marcus 8)
-Creating a feed from a single source "silently no-ops." Likely the same root as D (validation/
-confirmation). Lower priority but folds into the D fix.
+## Notes on FRICTION-WATCH items
+- **added-feature-buried:** mostly clear — 8/10 found per-feed Options instantly; the disclosure relabels to "Options · on" when active (well-liked cue). Only Dana flags the faint styling. Fix-worthy polish, not a true bury.
+- **lexeme-collision (per-feed mask vs global Busy mask):** RESOLVED in copy — the global mask line "Applies to all feeds. Need it for just one? Use a feed's Options." cross-references cleanly; every tester who checked called the two clearly distinct. No confusion reported.
+- **copy-feed-URL "Copied!" cue:** FIRES correctly for all testers who checked; clipboard genuinely held the URL (verified). No defect.
+- Cross-cut non-app note: the provided Google UK Holidays feed returned HTTP 429 in the test environment (Google rate-limiting, not an app bug); affected testers substituted calendarlabs Canada Holidays.
 
-## Fix plan for round 2 (each maps to a complaint above)
-1. **A** — Copy button shows "Copied!" confirmation (revert after ~2s); apply to all copy
-   buttons (feed URL, webcal URL). *(Dana, Aisha, Elena, Sam)*
-2. **B** — Deduplicate VEVENTs in the merge: by UID, with a DTSTART+SUMMARY fallback. Applies
-   before and after the busy-only mask. *(Marcus, Dana, Jules, Sam)*
-3. **C** — Under busy-only mask, replace each event's UID with an opaque deterministic hash so
-   no source identity leaks. *(Tomás, Rob)*
-4. **D/F** — Create-time validation + confirmation: reject empty/malformed/link-local/localhost/
-   non-http(s) URLs with an inline message; clear stale errors; show merged event count and any
-   per-source fetch failures at create time; allow a single-feed build but confirm it explicitly.
-   *(Aisha, Wen, Priya, Marcus)*
-5. **E** — Add a one-tap "Add to Google Calendar" link (render-time, using the webcal/https feed
-   URL) and add Outlook/Office365 to the subscribe instructions. *(Elena, Sam)*
+## Recommendation: FAIL round 1 → round 2 fixes required
 
-These are all targeted, non-structural changes. Expected to lift the four 8s closest to the
-edge (Marcus, Jules, Tomás, Rob — each named a single blocking fix that's in this list) plus
-both 7s (Dana, Aisha) and Elena/Sam/Priya/Wen over the line. No refactor required.
+Bar is every in-audience persona at 9+; we are at 1/10. Eight personas sit at 8 and two at 6 — close, but real defects (one a privacy-correctness bug) hold them back. Required round-2 fixes, in priority order:
+
+- **P0 (correctness/privacy):** Fix cross-feed de-dup so it never (a) silently drops events without disclosure, and (b) lets a dedup survivor leak a MASKED feed's real title. A masked feed must always render "Busy" regardless of dedup. (Wen)
+- **P0 (mask UX):** Let a masked feed keep its per-feed prefix so masked rows are distinguishable ("[Partner] Busy"), or otherwise preserve provenance for multiple masked feeds. (Aisha)
+- **P1 (the 8→9 lever for the most testers):** Address the opaque-URL friction — at minimum a one-line "this URL is self-contained and safe to share, nothing is stored" reassurance; ideally an optional per-feed nickname so the user can recall which link went where. (Jules, Rob, Sam, Elena)
+- **P1 (fetch failure honesty):** Surface a per-source failure reason/status (e.g. "rate-limited (429) — retry") and stop counting failed feeds as merged/labelled in the summary; add a timeout so "Creating…" can't hang indefinitely on a slow/failing upstream. (Priya, Marcus, Wen, Tomás)
+- **P2 (discoverability polish):** Make the per-feed "Options" disclosure visually stronger (larger/contrastier label, clearer affordance) so the differentiator isn't faint. (Dana)
+- **P2 (onboarding):** Don't prefill row 1 with a dummy feed URL — use a placeholder instead so users aren't unsure if it's theirs. (Elena)
+- **P2 (privacy copy):** Add an explicit "we don't log/store your source feed URLs" line near the input. (Tomás)

@@ -75,6 +75,49 @@ describe("token encrypt/decrypt", () => {
   });
 });
 
+describe("token round-trip: per-feed SourceConfig fields", () => {
+  it("round-trips prefix, busyOnly, hideAllDay through encrypt/decrypt", () => {
+    const perFeedConfig: BlendConfig = {
+      sources: [
+        { url: "https://a.example.com/cal.ics", prefix: "[Work]", busyOnly: true, hideAllDay: false },
+        { url: "https://b.example.com/cal.ics" },
+        { url: "https://c.example.com/cal.ics", hideAllDay: true },
+      ],
+    };
+    const token = encryptConfig(perFeedConfig, key);
+    const recovered = decryptToken(token, key);
+    expect(recovered.sources).toHaveLength(3);
+    const s0 = recovered.sources[0] as { url: string; prefix?: string; busyOnly?: boolean; hideAllDay?: boolean };
+    expect(s0.url).toBe("https://a.example.com/cal.ics");
+    expect(s0.prefix).toBe("[Work]");
+    expect(s0.busyOnly).toBe(true);
+    // hideAllDay: false — validateConfig would strip it, but the token carries what was given
+    const s1 = recovered.sources[1] as { url: string; prefix?: string };
+    expect(s1.url).toBe("https://b.example.com/cal.ics");
+    expect(s1.prefix).toBeUndefined();
+    const s2 = recovered.sources[2] as { url: string; hideAllDay?: boolean };
+    expect(s2.hideAllDay).toBe(true);
+  });
+
+  it("legacy string[] round-trips with no per-feed fields injected", () => {
+    const legacyConfig: BlendConfig = {
+      sources: ["https://a.example.com/cal.ics", "https://b.example.com/cal.ics"],
+    };
+    const token = encryptConfig(legacyConfig, key);
+    const recovered = decryptToken(token, key);
+    for (const src of recovered.sources) {
+      if (typeof src === "string") {
+        // legacy string — no object fields
+        expect(typeof src).toBe("string");
+      } else {
+        expect((src as { prefix?: string }).prefix).toBeUndefined();
+        expect((src as { busyOnly?: boolean }).busyOnly).toBeUndefined();
+        expect((src as { hideAllDay?: boolean }).hideAllDay).toBeUndefined();
+      }
+    }
+  });
+});
+
 describe("getKeyFromEnv", () => {
   it("accepts a 64-char hex key", () => {
     const hex = randomBytes(32).toString("hex");

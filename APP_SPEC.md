@@ -19,7 +19,13 @@ MergeCal at $2/mo. Nothing free + hosted + no-signup does merge + filter + busy-
    or webcal://), optionally set include-keyword and/or exclude-keyword filters (matched
    case-insensitively against event SUMMARY), and optionally toggle "busy-only privacy
    mask" (every event's SUMMARY becomes "Busy"; DESCRIPTION, LOCATION, ATTENDEE, and
-   ORGANIZER are removed). Empty/malformed/localhost/link-local/non-http(s) URLs are
+   ORGANIZER are removed). Each source feed row also has an optional, default-collapsed
+   "Options" disclosure (always shown per row) offering three independent PER-FEED controls:
+   a title prefix/label prepended to that feed's event titles (e.g. "[Work] "), a per-feed
+   "mask this feed's titles" toggle (masks only this feed to "Busy" while other feeds stay
+   detailed — an override of the global mask), and a per-feed "hide all-day events" toggle.
+   These are all-optional and additive; an unconfigured feed behaves exactly as before.
+   Empty/malformed/localhost/link-local/non-http(s) URLs are
    rejected with inline messages. Clicking "Create feed" produces the merged feed URL
    with a copy button (showing "Copied!" on click), a matching `webcal://` variant, a
    one-tap "Add to Google Calendar" button, and subscribe instructions for Google
@@ -41,7 +47,9 @@ MergeCal at $2/mo. Nothing free + hosted + no-signup does merge + filter + busy-
 3. **Preview before subscribing.** After "Create feed", the builder page shows the next
    ~10 upcoming events from the merged result (title, date/time, which filters/mask
    applied) so the user can confirm the filters and mask did what they expect before
-   copying the URL into their calendar app.
+   copying the URL into their calendar app. The preview reflects per-feed rules: titles
+   show their feed's prefix already prepended, per-feed-masked feeds appear as "Busy", and
+   all-day events hidden from a feed do not appear.
 
 ## Success checks
 
@@ -66,6 +74,19 @@ MergeCal at $2/mo. Nothing free + hosted + no-signup does merge + filter + busy-
   failed source count.
 - `GET /api/feed/<token>` response carries a `Cache-Control` header with `s-maxage` of at
   least 300.
+- PER-FEED PREFIX: a feed configured with prefix `[Work] ` produces merged VEVENTs whose
+  SUMMARY starts with `[Work] ` for that feed's events ONLY; events sourced from a no-prefix
+  feed in the same blend are unchanged (no prefix).
+- PER-FEED MASK: with per-feed "mask this feed's titles" on for feed A only, every VEVENT
+  originating from feed A has `SUMMARY:Busy` while feed B's VEVENTs keep their detailed
+  titles in the same merged output.
+- PER-FEED HIDE ALL-DAY: with per-feed "hide all-day events" on for feed A only, no all-day
+  VEVENT from feed A appears in the output, while feed A's timed events and ALL of feed B's
+  events (including all-day) remain.
+- BACK-COMPAT: a legacy token whose decrypted `config.sources` is a plain `string[]` (no
+  per-feed option objects) merges to byte-for-byte the same result as before this feature —
+  curl/node-ical on such a token shows no prefixes, no per-feed masking, and no dropped
+  all-day events.
 - The builder page works with no login: a fresh incognito browser can complete flow 1 and
   see the flow 3 preview.
 

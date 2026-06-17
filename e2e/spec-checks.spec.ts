@@ -214,3 +214,82 @@ test("webcal:// source URLs are accepted and normalized", async ({
   expect(res.status()).toBe(200);
   expect(await res.text()).toContain("SUMMARY:Piano lesson");
 });
+
+test("per-feed prefix: work feed prefixed [Work], home feed unprefixed", async ({
+  request,
+  baseURL,
+}) => {
+  const { feedPath } = await createToken(request, baseURL!, {
+    sources: [
+      { url: `${baseURL}/api/test-fixture/work`, prefix: "[Work] " },
+      { url: `${baseURL}/api/test-fixture/home` },
+    ],
+  });
+  const body = await (await request.get(`${baseURL}${feedPath}`)).text();
+  // Work-source events should be prefixed.
+  expect(body).toContain("SUMMARY:[Work] Daily standup");
+  // Home-source events should NOT be prefixed.
+  expect(body).toContain("SUMMARY:Piano lesson");
+  expect(body).not.toContain("SUMMARY:[Work] Piano lesson");
+});
+
+test("per-feed mask: work feed masked to Busy, home feed stays detailed", async ({
+  request,
+  baseURL,
+}) => {
+  const { feedPath } = await createToken(request, baseURL!, {
+    sources: [
+      { url: `${baseURL}/api/test-fixture/work`, busyOnly: true },
+      { url: `${baseURL}/api/test-fixture/home` },
+    ],
+  });
+  const body = await (await request.get(`${baseURL}${feedPath}`)).text();
+  // Home feed's Piano lesson should be detailed.
+  expect(body).toContain("SUMMARY:Piano lesson");
+  // Work feed's events should be masked.
+  expect(body).toContain("SUMMARY:Busy");
+  // No work-specific title should appear unmasked.
+  expect(body).not.toContain("SUMMARY:Daily standup");
+});
+
+test("per-feed hide-all-day: home feed all-day events dropped, work feed unaffected", async ({
+  request,
+  baseURL,
+}) => {
+  const { feedPath } = await createToken(request, baseURL!, {
+    sources: [
+      { url: `${baseURL}/api/test-fixture/work` },
+      { url: `${baseURL}/api/test-fixture/home`, hideAllDay: true },
+    ],
+  });
+  const body = await (await request.get(`${baseURL}${feedPath}`)).text();
+  // Work events (all timed) should be present.
+  expect(body).toContain("SUMMARY:Daily standup");
+  // Home timed events should be present.
+  expect(body).toContain("SUMMARY:Piano lesson");
+  // Spec: home feed all-day events (Birthday, Holiday) absent.
+  // (The test fixture home feed contains an all-day Birthday event.)
+  const allDayLines = body.match(/DTSTART;VALUE=DATE:[^\r\n]+/g) ?? [];
+  // All remaining VALUE=DATE events must come from work fixture (which has none),
+  // so there should be zero all-day events from home.
+  expect(allDayLines.length).toBe(0);
+});
+
+test("back-compat: legacy string[] sources token still merges correctly", async ({
+  request,
+  baseURL,
+}) => {
+  // Post a plain string[] (legacy format) — server must accept and merge as before.
+  const { feedPath } = await createToken(request, baseURL!, {
+    sources: [
+      `${baseURL}/api/test-fixture/work`,
+      `${baseURL}/api/test-fixture/home`,
+    ],
+  });
+  const body = await (await request.get(`${baseURL}${feedPath}`)).text();
+  expect(body).toContain("SUMMARY:Daily standup");
+  expect(body).toContain("SUMMARY:Piano lesson");
+  // No prefixes, no masking.
+  expect(body).not.toContain("SUMMARY:[");
+  expect(body).not.toContain("SUMMARY:Busy");
+});

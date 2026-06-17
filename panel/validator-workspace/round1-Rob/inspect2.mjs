@@ -1,0 +1,16 @@
+import { chromium } from 'playwright';
+const F1='https://www.calendarlabs.com/ical-calendar/ics/76/US_Holidays.ics';
+const F2='https://www.calendarlabs.com/ical-calendar/ics/39/Canada_Holidays.ics';
+const browser=await chromium.launch();
+const ctx=await browser.newContext({viewport:{width:1280,height:900},permissions:['clipboard-read','clipboard-write']});
+const page=await ctx.newPage();
+await page.goto('http://localhost:3000',{waitUntil:'networkidle'});
+await page.locator('input').first().fill(F1);
+await page.locator('input[placeholder*="example.com/calendar-2"]').fill(F2);
+const optBtns=page.locator('button',{hasText:'Options'});
+console.log('opt buttons', await optBtns.count());
+await optBtns.nth(0).click(); await page.waitForTimeout(200);
+await optBtns.nth(1).click(); await page.waitForTimeout(300);
+const inputs=await page.locator('input').evaluateAll(els=>els.map(e=>({ph:e.placeholder,type:e.type,visible:e.offsetParent!==null})));
+console.log(JSON.stringify(inputs,null,1));
+await ctx.close();await browser.close();

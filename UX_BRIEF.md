@@ -31,6 +31,38 @@ that did exactly what you asked.
   "Add to Google Calendar" button (one tap, uses the feed URL). Below it, equal-weight
   subscribe instructions for Apple Calendar, Outlook / Office 365, and Google.
 
+## 4b. Per-feed rules (advanced merge — this iteration)
+- **Each feed row gets its own "Options" disclosure, always visible from cold load.** Render a
+  small, low-key per-row affordance (a text/disclosure toggle labelled "Options", an inline
+  triangle/▸ caret) directly under or beside every source-URL input — on EVERY row, including
+  empty ones (do NOT gate it on the URL being filled: optional-ui-gated-on-data-presence).
+  Default collapsed. The row stays a clean URL field by default so the 5-second story
+  ("paste feeds → get one URL") is untouched at 2–5 feeds.
+- **Expanding "Options" reveals three optional per-feed controls**, stacked, indented under
+  that feed's URL so the grouping is obvious:
+  1. **Title prefix** — short text input, label "Label added to this feed's event titles",
+     placeholder e.g. `[Work] `. Prepended verbatim to every event title from this feed only.
+  2. **Mask this feed's titles** — checkbox. Crucially NOT labelled "Busy-only" (that lexeme is
+     reserved for the global control); helper text: "Show this feed's events as 'Busy', keeping
+     other feeds detailed." This is a per-feed override of the global mask.
+  3. **Hide all-day events from this feed** — checkbox; helper: "Drop birthdays/holidays and
+     other all-day items from this feed."
+- **Global vs per-feed legibility.** Keep the global keyword filters + global "Busy-only privacy
+  mask" exactly where they are. Add one quiet line under the global mask: "Applies to all feeds.
+  Need it for just one? Use a feed's Options." So the two masks read as scope levels, not as a
+  duplicated/broken control.
+- **A configured feed signals itself.** When a feed has any per-feed option set, keep its
+  "Options" affordance showing a subtle "on" state (e.g. "Options · on" or a filled caret) so the
+  user knows config is applied even while collapsed — no silent state.
+- **Preview reflects per-feed rules (flow 3).** The ~10-event preview must show each event with
+  its feed's prefix already prepended to the title, per-feed-masked feeds shown as "Busy", and
+  hidden all-day events absent — so the user verifies origin labels and masks before subscribing.
+  Where space allows, the preview-applied summary line may note "2 feeds labelled · 1 feed masked".
+- **Purely additive / back-compat.** Per-feed options are all-optional and absent by default; an
+  un-configured feed must look and behave exactly as today (never "broken"). Legacy already-
+  subscribed feed URLs (token config with a plain list of source URLs, no per-feed objects) keep
+  working unchanged — this feature only adds, never alters, existing behaviour.
+
 ## 5. Craft notes (Aisha — product designer)
 - **Empty state:** the pre-filled example IS the empty state — never a blank box. The preview
   area shows "Your merged events will appear here" with the example's upcoming events once built.

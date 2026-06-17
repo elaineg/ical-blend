@@ -279,8 +279,10 @@ describe("upcomingEvents", () => {
     expect([...times].sort((a, b) => a - b)).toEqual(times);
   });
 
-  it("deduplicates events with same DTSTART+SUMMARY when UIDs differ", () => {
-    // Two cals where same event has different UIDs but identical DTSTART+SUMMARY
+  it("does NOT deduplicate events with different UIDs even if DTSTART+SUMMARY match (UID-first identity)", () => {
+    // Two events from different providers: different UIDs, same DTSTART+SUMMARY.
+    // These are genuinely distinct events (e.g. US Holidays vs Canada Holidays both
+    // have "New Year's Day" on Jan 1 but with different UIDs). Both must survive.
     const calDup1 = [
       "BEGIN:VCALENDAR",
       "BEGIN:VEVENT",
@@ -299,13 +301,281 @@ describe("upcomingEvents", () => {
       "END:VEVENT",
       "END:VCALENDAR",
     ].join("\r\n");
-    // Different UIDs but same DTSTART+SUMMARY — should deduplicate.
+    // Different UIDs → both events must survive (UID-first rule).
     const out = mergeCalendars({
       calendars: [parseCalendar(calDup1), parseCalendar(calDup2)],
       options: {},
     });
     const outEvents = upcomingEvents(out, 10);
-    expect(outEvents.length).toBe(1);
+    expect(outEvents.length).toBe(2);
     expect(outEvents[0].summary).toBe("Team Meeting");
+    expect(outEvents[1].summary).toBe("Team Meeting");
+  });
+});
+
+describe("dedup-under-masking correctness (P0 privacy)", () => {
+  // Two events on the same date with different summaries — same DTSTART but
+  // distinct summaries → different content keys → must NOT collapse.
+  it("distinct masked events with same DTSTART but different SUMMARY do NOT collapse", () => {
+    const cal = [
+      "BEGIN:VCALENDAR",
+      "BEGIN:VEVENT",
+      "UID:ev-A@test.com",
+      "DTSTART:20270901T100000Z",
+      "SUMMARY:Meeting A",
+      "END:VEVENT",
+      "BEGIN:VEVENT",
+      "UID:ev-B@test.com",
+      "DTSTART:20270901T100000Z",
+      "SUMMARY:Meeting B",
+      "END:VEVENT",
+      "END:VCALENDAR",
+    ].join("\r\n");
+    const out = mergeCalendars({
+      calendars: [parseCalendar(cal)],
+      options: { busyOnly: true },
+    });
+    // Both events must survive — two "Busy" rows.
+    const summaryLines = unfold(out).filter((l) => l.startsWith("SUMMARY:"));
+    expect(summaryLines).toHaveLength(2);
+    for (const s of summaryLines) expect(s).toBe("SUMMARY:Busy");
+  });
+
+  // Cross-feed duplicate: same UID in feed-A (unmasked) and feed-B (masked).
+  // The survivor must be masked (privacy-wins rule), never leaking feed-A's title.
+  it("cross-feed duplicate where one feed is masked → output is masked (no title leak)", () => {
+    const feedUnmasked = [
+      "BEGIN:VCALENDAR",
+      "BEGIN:VEVENT",
+      "UID:shared-holiday@example.com",
+      "DTSTART:20270101T000000Z",
+      "SUMMARY:New Year's Day",
+      "END:VEVENT",
+      "END:VCALENDAR",
+    ].join("\r\n");
+    const feedMasked = [
+      "BEGIN:VCALENDAR",
+      "BEGIN:VEVENT",
+      "UID:shared-holiday@example.com",
+      "DTSTART:20270101T000000Z",
+      "SUMMARY:New Year's Day",
+      "END:VEVENT",
+      "END:VCALENDAR",
+    ].join("\r\n");
+    // Feed 0 is unmasked, feed 1 is masked (per-feed busyOnly).
+    const out = mergeCalendars({
+      calendars: [parseCalendar(feedUnmasked), parseCalendar(feedMasked)],
+      options: {},
+      perFeedOptions: [{}, { busyOnly: true }],
+    });
+    // Event must exist exactly once.
+    const summaryLines = unfold(out).filter((l) => l.startsWith("SUMMARY:"));
+    expect(summaryLines).toHaveLength(1);
+    // Must be masked — never reveal "New Year's Day".
+    expect(summaryLines[0]).toBe("SUMMARY:Busy");
+    expect(out).not.toContain("New Year");
+  });
+
+  // Cross-feed: different UIDs, same DTSTART+SUMMARY, one feed masked.
+  // UID-first rule: both events survive. The masked-feed event is "Busy";
+  // the unmasked-feed event keeps its real title (they are DISTINCT events).
+  it("cross-feed different-UID same-DTSTART+SUMMARY: both survive, masked feed is Busy, unmasked keeps real title", () => {
+    const feedUnmasked = [
+      "BEGIN:VCALENDAR",
+      "BEGIN:VEVENT",
+      "UID:holiday-us@provider-a.com",
+      "DTSTART:20271225T000000Z",
+      "SUMMARY:Christmas Day",
+      "END:VEVENT",
+      "END:VCALENDAR",
+    ].join("\r\n");
+    const feedMasked = [
+      "BEGIN:VCALENDAR",
+      "BEGIN:VEVENT",
+      "UID:holiday-gb@provider-b.com",
+      "DTSTART:20271225T000000Z",
+      "SUMMARY:Christmas Day",
+      "END:VEVENT",
+      "END:VCALENDAR",
+    ].join("\r\n");
+    const out = mergeCalendars({
+      calendars: [parseCalendar(feedUnmasked), parseCalendar(feedMasked)],
+      options: {},
+      perFeedOptions: [{}, { busyOnly: true }],
+    });
+    const summaryLines = unfold(out).filter((l) => l.startsWith("SUMMARY:"));
+    // Both events must survive (different UIDs = different events).
+    expect(summaryLines).toHaveLength(2);
+    // One is Busy (masked feed), one keeps real title (unmasked feed).
+    expect(summaryLines).toContain("SUMMARY:Busy");
+    expect(summaryLines).toContain("SUMMARY:Christmas Day");
+  });
+
+  // Masked survivor with a per-feed prefix: prefix must appear on the output.
+  it("masked survivor from masked feed carries that feed's prefix", () => {
+    const feedMasked = [
+      "BEGIN:VCALENDAR",
+      "BEGIN:VEVENT",
+      "UID:work-event@test.com",
+      "DTSTART:20270615T090000Z",
+      "SUMMARY:Secret meeting",
+      "END:VEVENT",
+      "END:VCALENDAR",
+    ].join("\r\n");
+    const out = mergeCalendars({
+      calendars: [parseCalendar(feedMasked)],
+      options: {},
+      perFeedOptions: [{ busyOnly: true, prefix: "[Work] " }],
+    });
+    expect(out).toContain("SUMMARY:[Work] Busy");
+    expect(out).not.toContain("Secret");
+  });
+
+  // Cross-feed: different UIDs (UID-first rule) — both events survive independently.
+  // The masked feed's event is "[Masked] Busy"; the unmasked feed's event keeps its real title.
+  it("UID-first cross-feed: different UIDs → both events survive, each gets its own feed's treatment", () => {
+    const feedWithPrefix = [
+      "BEGIN:VCALENDAR",
+      "BEGIN:VEVENT",
+      "UID:holiday-a@prefix.com",
+      "DTSTART:20270704T000000Z",
+      "SUMMARY:Independence Day",
+      "END:VEVENT",
+      "END:VCALENDAR",
+    ].join("\r\n");
+    const feedMasked = [
+      "BEGIN:VCALENDAR",
+      "BEGIN:VEVENT",
+      "UID:holiday-b@masked.com",
+      "DTSTART:20270704T000000Z",
+      "SUMMARY:Independence Day",
+      "END:VEVENT",
+      "END:VCALENDAR",
+    ].join("\r\n");
+    const out = mergeCalendars({
+      calendars: [parseCalendar(feedWithPrefix), parseCalendar(feedMasked)],
+      options: {},
+      perFeedOptions: [{ prefix: "[USA] " }, { busyOnly: true }],
+    });
+    // Both events survive (different UIDs = distinct events).
+    const summaryLines = unfold(out).filter((l) => l.startsWith("SUMMARY:"));
+    expect(summaryLines).toHaveLength(2);
+    // Unmasked feed keeps real title with prefix.
+    expect(summaryLines).toContain("SUMMARY:[USA] Independence Day");
+    // Masked feed is Busy.
+    expect(summaryLines).toContain("SUMMARY:Busy");
+  });
+});
+
+describe("count honesty: reported count === VEVENT count in serialized ICS", () => {
+  // Regression for Marcus's bug: the count shown in the UI must equal the number
+  // of BEGIN:VEVENT lines in the ICS that mergeCalendars produces — with ALL
+  // transforms active: dedup, include/exclude filter, per-feed mask, per-feed
+  // prefix, and per-feed hideAllDay.
+
+  // Three feeds:
+  //   Feed 0 (Work): 2 events, prefix [Work], not masked, no hideAllDay
+  //   Feed 1 (Home): 3 events (1 all-day), no prefix, masked to Busy, hideAllDay ON
+  //   Feed 2 (Extra): 1 event with UID shared with Feed 0 (should dedup out),
+  //                   1 unique event matching exclude keyword (dropped by filter)
+  const FEED_WORK = [
+    "BEGIN:VCALENDAR",
+    "BEGIN:VEVENT",
+    "UID:work-a@test.com",
+    "DTSTART:20270801T090000Z",
+    "SUMMARY:Sprint planning",
+    "END:VEVENT",
+    "BEGIN:VEVENT",
+    "UID:work-b@test.com",
+    "DTSTART:20270802T090000Z",
+    "SUMMARY:Code review",
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].join("\r\n");
+
+  const FEED_HOME = [
+    "BEGIN:VCALENDAR",
+    "BEGIN:VEVENT",
+    "UID:home-a@test.com",
+    "DTSTART:20270803T180000Z",
+    "SUMMARY:Dinner reservation",
+    "END:VEVENT",
+    "BEGIN:VEVENT",
+    "UID:home-b@test.com",
+    "DTSTART;VALUE=DATE:20270804",
+    "SUMMARY:Alice birthday",
+    "END:VEVENT",
+    "BEGIN:VEVENT",
+    "UID:home-c@test.com",
+    "DTSTART:20270805T100000Z",
+    "SUMMARY:Doctor appointment",
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].join("\r\n");
+
+  // Feed 2: duplicate of work-a (will dedup), plus an excluded event.
+  const FEED_EXTRA = [
+    "BEGIN:VCALENDAR",
+    "BEGIN:VEVENT",
+    "UID:work-a@test.com",
+    "DTSTART:20270801T090000Z",
+    "SUMMARY:Sprint planning",
+    "END:VEVENT",
+    "BEGIN:VEVENT",
+    "UID:extra-standup@test.com",
+    "DTSTART:20270806T090000Z",
+    "SUMMARY:Daily standup",
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].join("\r\n");
+
+  it("mergeCalendars count === parseCalendar(output).events.length with all transforms active", () => {
+    const out = mergeCalendars({
+      calendars: [
+        parseCalendar(FEED_WORK),
+        parseCalendar(FEED_HOME),
+        parseCalendar(FEED_EXTRA),
+      ],
+      options: {
+        exclude: "standup", // removes extra-standup@test.com
+      },
+      perFeedOptions: [
+        { prefix: "[Work] " },                   // Feed 0: prefix only
+        { busyOnly: true, hideAllDay: true },     // Feed 1: mask + hide all-day (drops home-b)
+        {},                                      // Feed 2: no options
+      ],
+    });
+
+    // Count VEVENTs via parseCalendar on the serialized ICS (same path as /api/token).
+    const { events: parsedEvents } = parseCalendar(out);
+    const countFromParse = parsedEvents.length;
+
+    // Count raw BEGIN:VEVENT occurrences in the serialized output.
+    const countFromIcs = (out.match(/^BEGIN:VEVENT\r?$/gm) ?? []).length;
+
+    // Both counts must agree with each other.
+    expect(countFromParse).toBe(countFromIcs);
+
+    // Sanity-check the expected survivor events:
+    // Feed 0: work-a (Sprint planning), work-b (Code review) → 2 events
+    // Feed 1: home-a (Dinner, timed → masked to Busy), home-b (all-day → dropped),
+    //         home-c (Doctor appointment, timed → masked to Busy) → 2 events
+    // Feed 2: work-a (deduped with Feed 0 → dropped),
+    //         extra-standup (matches "standup" exclude → dropped) → 0 events
+    // Total expected: 4
+    expect(countFromParse).toBe(4);
+
+    // Verify the right events survived (with correct transforms):
+    // Feed 0 with [Work] prefix
+    expect(out).toContain("SUMMARY:[Work] Sprint planning");
+    expect(out).toContain("SUMMARY:[Work] Code review");
+    // Feed 1 masked (Busy), all-day birthday dropped
+    expect(out).not.toContain("Alice birthday");
+    // Feed 2's standup excluded
+    expect(out).not.toContain("standup");
+    expect(out).not.toContain("Standup");
+    // Feed 2's duplicate deduped
+    const sprintCount = (out.match(/Sprint planning/g) ?? []).length;
+    expect(sprintCount).toBe(1);
   });
 });

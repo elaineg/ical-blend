@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { validateConfig } from "@/lib/config";
+import { validateConfig, normalizeSource } from "@/lib/config";
 import { buildBlend } from "@/lib/blend";
 import { upcomingEvents } from "@/lib/ics";
 import { encryptConfig, getKeyFromEnv } from "@/lib/token";
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
   }
 
   // Build the blend at create time to get event count and surface failures.
-  const { ics, failedSources } = await buildBlend(result.config);
+  const { ics, failedSources, failedReasons } = await buildBlend(result.config);
   const events = upcomingEvents(ics, 10);
 
   // Count all events in the merged ICS (not just upcoming).
@@ -39,11 +39,16 @@ export async function POST(req: Request) {
   const { events: allEvents } = parseCalendar(ics);
   const totalEventCount = allEvents.length;
 
+  const normalizedSources = result.config.sources.map(normalizeSource);
+  const feedsLabelled = normalizedSources.filter((s) => s.prefix).length;
+  const feedsMasked = normalizedSources.filter((s) => s.busyOnly).length;
+
   const token = encryptConfig(result.config, key);
   return NextResponse.json({
     token,
     feedPath: `/api/feed/${token}`,
     failedSources,
+    failedReasons,
     totalEventCount,
     previewEvents: events,
     applied: {
@@ -51,6 +56,8 @@ export async function POST(req: Request) {
       exclude: result.config.exclude ?? null,
       busyOnly: result.config.busyOnly === true,
       sourceCount: result.config.sources.length,
+      feedsLabelled,
+      feedsMasked,
     },
   });
 }

@@ -1,0 +1,5 @@
+PASSED 2026-06-12 (run 20260612-211511-daily) — user panel round 2.
+9/10 testers at advocacy >=9, clarity=Yes & value=Yes unanimous (10/10).
+Scores R2: Priya 9, Marcus 9, Wen 6, Tomas 9, Dana 9, Jules 9, Aisha 9, Rob 9, Elena 9, Sam 9.
+Holdout: Wen (6) — data-purist objection to (correct, user-requested) cross-feed dedup; assessed not a defect. Disclosure-of-dedup-count logged as future enhancement.
+Prod: https://ical-blend.vercel.app (deployment dpl_78XCtCCgTXrUuNDxf1iCQoeeNSBD, commit 84ad06f).

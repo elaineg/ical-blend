@@ -1,0 +1,27 @@
+{
+  "url": "http://localhost:3000",
+  "consoleErrors": [],
+  "pageErrors": [],
+  "status": 200,
+  "title": "iCal Blend — merge, filter and privacy-mask calendar feeds",
+  "h1": "Stop checking three calendars",
+  "aboveFoldText": [
+    "Stop checking three calendars",
+    "Paste 2–5 calendar links. Get one feed. No account. Blend your work, personal, and shared calendars into one link you subscribe to once — and hand others a version with the private titles hidden.",
+    "[input placeholder=\"https://example.com/calendar-1.ics\" value=\"https://www.googleapis.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics\"]",
+    "×",
+    "▸Options",
+    "[input placeholder=\"https://example.com/calendar-2.ics\" value=\"\"]",
+    "×",
+    "▸Options",
+    "+ Add another source",
+    "Only include events containing",
+    "[input placeholder=\"e.g. piano\" value=\"\"]",
+    "Exclude events containing",
+    "[input placeholder=\"e.g. standup\" value=\"\"]",
+    "Keywords match event titles, case-insensitively. Leave blank to keep everything.",
+    "Busy-only privacy maskEvery event title becomes “Busy”; descriptions, locations and attendees are stripped. Times are kept.Applies to all feeds. Need it for just one? Use a feed's Options.",
+    "[input placeholder=\"\" value=\"on\"]",
+    "Create feed"
+  ]
+}

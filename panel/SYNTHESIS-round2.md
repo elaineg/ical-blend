@@ -1,60 +1,62 @@
-# iCal Blend — Panel Synthesis, Round 2
+# iCal Blend — Panel SYNTHESIS Round 2
 
-App: ical-blend · Preview tested: https://ical-blend-3vh6ec06l-elainegao.vercel.app · Run: 20260612-211511-daily
+App: http://localhost:3000 (local prod build, freshly rebuilt after round-1 fixes)
+Round 1: 1/10 in-audience. Build was FIXED; all 10 personas re-tested cold.
+Audience bar: in-audience = anyone juggling MULTIPLE calendar feeds. PASS = every in-audience persona advocates 9+.
 
-## Score table (all 10 re-tested — no one fully passed round 1, so a full re-test was required)
+## Per-persona table
 
-| # | Persona | Role | Clarity | Value | Advocacy R1→R2 | Prior concerns addressed |
-|---|---------|------|---------|-------|----------------|--------------------------|
-| 1 | Priya | Sr backend engineer | Yes | Yes | 8 → **9** | Yes — localhost/junk URLs rejected at submit, non-cal sources flagged at create time |
-| 2 | Marcus | Frontend engineer | Yes | Yes | 8 → **9** | Yes — single-feed builds explicitly, dedup real (Scotland-only events survive) |
-| 3 | Wen | Marketing data analyst | Yes | Yes | 8 → **6** | Partial — both R1 blockers fixed, but objects to dedup as undisclosed lossy transform |
-| 4 | Tomás | Operations analyst | Yes | Yes | 8 → **9** | Yes — busy-mask UID now opaque hash, 0 "gov.uk" leakage |
-| 5 | Dana | Demand-gen marketer | Yes | Yes | 7 → **9** | Yes — "Copied!" confirms, duplicates deduped |
-| 6 | Jules | Content/community marketer | Yes | Yes | 8 → **9** | Yes — dedup verified (177→114, zero exact dups), filters + no-login intact |
-| 7 | Aisha | Product designer | Yes | Yes | 7 → **9** | Yes — empty-submit message, "Copied!" + green confirm, errors clear on correct |
-| 8 | Rob | Brand/visual designer | Yes | Yes | 8 → **9** | Yes — busy-mask UID hashed, hard grep for client identity returns zero |
-| 9 | Elena | Engineering manager | Yes | Yes | 8 → **9** | Yes — one-tap Add-to-Google-Calendar deep link works on phone, Copy confirms |
-| 10 | Sam | Product manager | Yes | Yes | 8 → **9** | Yes — dedup in preview, "Copied!", Outlook instructions added |
+| Persona | In-audience? | Adv (R1→R2) | Value clear <30s | Biggest remaining blocker |
+|---------|--------------|-------------|------------------|----------------------------|
+| Priya (backend eng) | yes | 1→8 | yes | Privacy note overstates: source URLs transit server (server-key encrypt, not E2E); honest but aggressive claim |
+| Marcus (frontend eng) | yes | 1→9 | yes | Recall rows keyed on opaque URL until nicknamed (wants default label); "1 source failed" injected as a real calendar event |
+| Wen (data analyst) | yes | 1→**2** | yes | **REGRESSION: P0 NOT fixed — merge silently drops 6/65 events AND collapses distinct events, corrupting unmasked feed titles** |
+| Tomás (ops analyst) | yes | 1→8 | yes | Privacy note covers storage but not per-refresh server-side FETCH of his internal feed URL |
+| Dana (demand-gen mktr) | yes | 1→8 | yes | Positioning all "work/personal"; no marketer-facing (webinar/HubSpot) example |
+| Jules (community mktr) | yes | 1→8 | yes | Recall row leads with giant opaque URL, nickname buried/faint; Copy gives no "Copied!" confirmation |
+| Aisha (product designer) | yes | 1→9 | yes | Craft nit only: `[CA]Busy` missing space between prefix and word |
+| Rob (freelance designer) | yes | 1→8 | yes | `[Client]Busy` no-space (sloppy); no preview of saved blend contents beyond nickname |
+| Elena (eng manager) | yes | 1→9 | yes | No "preview as recipient" view — hesitates one beat before sharing masked link |
+| Sam (PM) | yes | 1→8 | yes | Recall is device-local only; no cross-device recall / reproducible link |
 
-**Exit condition (≥9 testers at advocacy ≥9, clarity=Yes, value=Yes): MET — 9/10 at ≥9, clarity & value unanimous Yes.**
+All 10 are IN-AUDIENCE (multi-feed jugglers). Value-clear: 10/10 yes.
 
-## What the round-2 fixes delivered (verified live by testers + fresh verifier)
-- **Copy confirmation (A):** Dana, Aisha, Elena all verified the clipboard write + "Copied!" state. Lifted both R1 7s.
-- **Dedup (B):** Jules and Marcus independently curl-verified 177 raw → 114 merged, zero exact duplicates, **region-unique events preserved** — confirming dedup collapses only genuine shared events.
-- **Busy-mask UID hashing (C):** Tomás and Rob both grepped the masked feed and confirmed zero source identity (`busy-<hex>@ical-blend` opaque UIDs); this was the single fix each named.
-- **Create-time validation + confirmation (D/F):** Priya verified localhost/link-local/junk rejected with HTTP 400 + clear message; merged event count surfaced.
-- **Add-to-Google + Outlook (E):** Elena verified the `calendar/render?cid=` deep link works on her phone.
+## Round-1 → Round-2 movement
 
-## The one holdout — Wen (8 → 6): assessed, NOT a shipping defect
-Wen's two R1 blockers (no create-time bad-source warning; no event-count confirmation) are both
-fixed and she verified them. Her score *dropped* because the new dedup keys on DTSTART+SUMMARY
-(not UID alone) and collapsed 63 of 177 gov.uk events whose UIDs differ — to her data-hygiene
-persona this is an "invisible lossy transform."
+Massive lift on the polish/trust/recall levers — 9 of 10 personas jumped from 1 to 8–9. Confirmed FIXED across testers:
+- Recall: "Your recent blends" + editable persisting nicknames + per-row Copy URL (Jules/Rob/Sam/Elena verified persistence across reload). This was the dominant 8→9 lever and it landed.
+- Fetch failures: now show "HTTP 404 / 429" reasons, failed feed excluded from merge count, no silent hang (Priya/Marcus/Tomás/Aisha verified).
+- Empty first row (Elena/Aisha verified).
+- Per-feed Options disclosure visible (Dana verified — "found it in one click").
+- Privacy note present near URL (all noted).
+- Masked feed keeps per-feed prefix (Aisha's R1 blocker — verified `[CA]Busy` retained, distinguishable).
 
-Assessment — this is correct, user-requested behavior, not a bug:
-- The 63 collapsed entries are genuine shared UK bank holidays (e.g. Christmas Day appears in
-  both england-and-wales and scotland feeds with different publisher UIDs but the same date+title).
-  Collapsing them is exactly what Jules, Marcus, Dana, and Sam explicitly asked for in round 1.
-- Over-aggression is ruled out by direct evidence: Marcus confirmed **Scotland-only events survive**
-  the merge — if dedup were dropping distinct events, region-unique holidays would vanish. They don't.
-- For timed events, DTSTART carries the time, so same-title events at different times do NOT collapse;
-  the date-only collapse only affects all-day events with an identical title, which are duplicates.
+BUT one persona moved the wrong way / barely: **Wen 1→2**, because she is the only tester who fetched and event-counted the actual generated .ics.
 
-Wen's *legitimate* residual point is **disclosure**: the confirmation says "Merged N events" but
-doesn't say how many duplicates were removed. That would convert the transform from invisible to
-visible and likely satisfy her. It is a cheap enhancement, NOT a correctness fix — logged below
-for a future iteration rather than gating this ship (the exit bar is met and the behavior is correct).
+## Dominant remaining blocker
 
-## Minor nits raised by passing testers (non-blocking, logged for future)
-- Disclose dedup count in the confirmation ("Merged 114 events — 63 duplicates removed across sources"). (Wen; also reassures all data-conscious users.)
-- Long (~170-char) feed token URL is ugly in a terminal / unlabeled. (Priya, Jules)
-- "Copied!" renders as a sibling label rather than swapping the button's own text. (Marcus)
-- Result renders below the still-expanded form with no scroll-to-result. (Aisha)
-- A "where to find your calendar's ICS link" hint for non-technical users. (Dana, Sam)
-- Mask copy on-screen doesn't state that identifiers are stripped. (Tomás)
+**P0 REGRESSION — DATA INTEGRITY (Wen, in-audience):** The privacy/dedup fix is NOT actually fixed at the data layer. Wen measured: US Holidays = 27 VEVENTs + Canada = 38 = 65 events in, but the merged feed served only **59 — 6 events silently dropped** while the UI claims "Merged 59 events." Worse, dedup runs AFTER masking and compares masked titles, so two genuinely-distinct events collapse: on shared-title dates (New Year's Day, Good Friday, Easter), the masked Canada twin wins and **destroys the unmasked US feed's real title** — `[Work]New Year's Day` appears zero times, replaced by a single `[Work]Busy`. Contrast confirms root cause: differently-titled events (US "Christmas" vs CA "Christmas Day") both survive; identically-titled ones collapse.
 
-## Decision
-Exit condition met with all fixes verified live and a fresh-context verifier PASS (build clean,
-40/40 unit, gating dedup/mask/merge items confirmed in the deployed build). Promote the verified
-preview to production and mark PASSED.
+This is THE exact "invisible transform / lost data" betrayal that kills the product for the most data-hygiene-sensitive user — and it silently corrupts ANY user's feed that has cross-source duplicate/identical titles plus masking. It is squarely in-scope (it IS the merge engine). The other 9 personas did not catch it because they trusted the "Merged 59 events" count and did not fetch+diff the raw .ics.
+
+Note: Marcus's panel reported merge of "59 events / 2 sources" with no concern — consistent with Wen's input total, confirming the 59 figure and the 6-event loss are real, not a per-tester fluke.
+
+### Secondary (non-blocking) themes
+- Cosmetic: `[CA]Busy` / `[Client]Busy` missing a space after prefix (Aisha, Rob) — easy fix.
+- Recall UX: nickname should be the bold row heading, opaque URL shrunk to a tail; add a default label; add "Copied!" confirmation (Marcus, Jules, Rob).
+- Trust copy: privacy note should acknowledge source URLs TRANSIT and are FETCHED server-side per refresh, not just "nothing stored" (Priya, Tomás) — claim is currently slightly over-stated for skeptics.
+- Out-of-scope / pre-existing asks (do NOT gate): cross-device recall / reproducible link (Sam), "preview as recipient" view (Elena), marketer-facing example copy (Dana).
+
+## Recommendation: FAIL round 2 — go to round 3
+
+In-audience PASS count: **2/10 at 9+** (Marcus 9, Aisha 9, Elena 9 = actually 3 at 9+; the rest 8 except Wen 2). Bar requires EVERY in-audience persona at 9+; 7 sit at 8 and one regressed to 2.
+
+The decisive blocker is the **P0 data-integrity regression**: the merge drops events and collapses/corrupts distinct (including unmasked) events when source feeds share identical titles under masking. This must be fixed before any ship — it silently loses and mislabels user data while reporting success.
+
+### Required round-3 fixes
+1. **P0 — fix the merge/dedup engine (Wen):** dedup must run on STABLE identity (UID + DTSTART), NOT on the post-masking display title. Masking must not cause distinct events to collapse, must not drop events, must not overwrite an unmasked event's real title with a masked twin's. The "Merged N events" count must equal events actually emitted (no silent loss). Add a verifier test that fetches the generated .ics and asserts input-event-count parity + no title corruption on shared-title cross-source dates.
+2. **P1 — prefix spacing:** render `[CA] Busy` with a space (Aisha, Rob).
+3. **P1 — trust-copy honesty:** privacy note should state source URLs transit + are fetched server-side on each refresh (encrypted at rest in the link, not E2E) — close Priya/Tomás's "overstated claim" gap.
+4. **P2 — recall polish:** nickname as bold row heading + URL as faint tail + default label + "Copied!" confirmation (Marcus, Jules, Rob).
+
+Once #1 is fixed and re-verified by fetching the .ics, the 7 personas at 8 are within one polish round of 9 (their gaps are #2–#4), so round 3 is realistically the passing round.

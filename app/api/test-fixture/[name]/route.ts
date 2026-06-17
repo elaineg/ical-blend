@@ -37,6 +37,23 @@ function event(uid: string, day: number, hour: number, summary: string, extra: s
   ];
 }
 
+function allDayEvent(uid: string, daysFromNow: number, summary: string): string[] {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() + daysFromNow);
+  const ymd = d.toISOString().slice(0, 10).replace(/-/g, "");
+  const d2 = new Date(d.getTime() + 24 * 60 * 60 * 1000);
+  const ymd2 = d2.toISOString().slice(0, 10).replace(/-/g, "");
+  return [
+    "BEGIN:VEVENT",
+    `UID:${uid}@fixture.ical-blend`,
+    `DTSTAMP:${dt(0, 0)}`,
+    `DTSTART;VALUE=DATE:${ymd}`,
+    `DTEND;VALUE=DATE:${ymd2}`,
+    `SUMMARY:${summary}`,
+    "END:VEVENT",
+  ];
+}
+
 const FIXTURES: Record<string, () => string> = {
   work: () =>
     calendar("work", [
@@ -57,6 +74,7 @@ const FIXTURES: Record<string, () => string> = {
         "DESCRIPTION:Bring insurance card",
       ]),
       ...event("home-3", 6, 17, "Piano recital"),
+      ...allDayEvent("home-birthday", 5, "Birthday celebration"),
     ]),
 };
 

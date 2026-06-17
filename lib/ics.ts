@@ -213,9 +213,24 @@ function tzid(timezoneLines: string[]): string {
   return getProp(timezoneLines, "TZID") ?? timezoneLines.join("\n");
 }
 
+export interface PerFeedOptions {
+  /** Prepend this string to every SUMMARY from this feed. */
+  prefix?: string;
+  /** Mask only this feed's events to "Busy". */
+  busyOnly?: boolean;
+  /** Drop all-day VEVENTs (DATE-valued DTSTART) from this feed. */
+  hideAllDay?: boolean;
+}
+
 export interface MergeInput {
   calendars: ParsedCalendar[];
   options: BlendOptions;
+  /**
+   * Optional per-feed options parallel to calendars[]. Length must match
+   * calendars[] (or be omitted/shorter — missing entries default to no
+   * per-feed options).
+   */
+  perFeedOptions?: PerFeedOptions[];
   /** 1-based indices of sources that failed to fetch. */
   failedSources?: number[];
   calendarName?: string;
@@ -227,8 +242,18 @@ export interface MergeInput {
  * VTIMEZONEs by TZID, keeps UIDs unique across sources, and appends an
  * all-day marker VEVENT when sources failed.
  */
+/** Return true if the VEVENT's DTSTART is a DATE (all-day, no time component). */
+function isAllDayEvent(eventLines: string[]): boolean {
+  const dtLine = getPropLine(eventLines, "DTSTART");
+  if (!dtLine) return false;
+  // DATE value: either explicit VALUE=DATE param or bare 8-digit form
+  if (/VALUE=DATE[^-]/.test(dtLine) || /VALUE=DATE$/.test(dtLine)) return true;
+  const value = dtLine.slice(valueColonIndex(dtLine) + 1);
+  return /^\d{8}$/.test(value);
+}
+
 export function mergeCalendars(input: MergeInput): string {
-  const { calendars, options, failedSources = [], calendarName } = input;
+  const { calendars, options, perFeedOptions = [], failedSources = [], calendarName } = input;
   const lines: string[] = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
@@ -248,15 +273,64 @@ export function mergeCalendars(input: MergeInput): string {
     }
   }
 
-  // Deduplicate events: primary key = UID; fallback = DTSTART+SUMMARY when
-  // UIDs are absent. Under busy-only, also build a DTSTART+SUMMARY key to
-  // catch events whose UIDs differ but content is identical (e.g. holiday
-  // feeds using per-provider UIDs for the same public holiday).
+  // --- PRIVACY-WINS pre-scan ---
+  // For cross-feed deduplication: if the SAME event appears in multiple feeds
+  // AND any of those feeds is masked, the output event MUST be masked.
+  //
+  // Identity rules (UID-first):
+  //   - Two events are the "same event" only if they share a UID.
+  //   - The DTSTART+SUMMARY content-key fallback is used ONLY when BOTH events
+  //     lack a UID. Events with DIFFERENT UIDs are NEVER collapsed.
+  //
+  // In this pre-scan we record masked UIDs (and masked anonymous content-keys
+  // for UID-less events) so we can privacy-wins force-mask survivors later.
+  const maskedUids = new Set<string>(); // UIDs that appear in a masked feed
+  const maskedAnonKeys = new Set<string>(); // DTSTART+SUMMARY keys for UID-less events in masked feeds
+  let anonPre = 0;
+  for (let i = 0; i < calendars.length; i++) {
+    const feedOpts: PerFeedOptions = perFeedOptions[i] ?? {};
+    const feedEffectiveBusy = options.busyOnly === true || feedOpts.busyOnly === true;
+    if (!feedEffectiveBusy) continue; // only care about masked feeds in this pass
+    for (const ev of calendars[i].events) {
+      if (feedOpts.hideAllDay && isAllDayEvent(ev)) continue;
+      const rawUidLine = getPropLine(ev, "UID");
+      const rawUid = rawUidLine ? rawUidLine.slice(valueColonIndex(rawUidLine) + 1) : "";
+      if (rawUid) {
+        // Has UID — record it so matching UIDs in unmasked feeds are also masked.
+        maskedUids.add(rawUid);
+      } else {
+        // No UID — use content key for the UID-less fallback only.
+        const dtstart = getProp(ev, "DTSTART") ?? "";
+        const summary = getProp(ev, "SUMMARY") ?? "";
+        anonPre += 1;
+        if (dtstart && summary) {
+          maskedAnonKeys.add(`${dtstart}\0${summary}`.toLowerCase());
+        }
+      }
+    }
+  }
+
+  // Deduplicate events — UID-FIRST identity:
+  //   - Primary key: UID. Two events with DIFFERENT UIDs are NEVER collapsed,
+  //     even if they share the same DTSTART+SUMMARY. Events with distinct UIDs
+  //     are genuinely different events (e.g. US vs Canada "New Year's Day").
+  //   - Content-key fallback (DTSTART+SUMMARY): ONLY when BOTH the current event
+  //     AND the previously-seen duplicate LACK a UID. This handles providers that
+  //     publish the same public holiday / recurring event without UIDs.
+  //   - Dedup identity is always computed from the ORIGINAL (pre-mask) event so
+  //     masking never changes which events survive.
   const seenUids = new Set<string>();
-  const seenDtStartSummary = new Set<string>();
+  const seenAnonContentKeys = new Set<string>(); // only for UID-less events
   let anon = 0;
   for (let i = 0; i < calendars.length; i++) {
+    const feedOpts: PerFeedOptions = perFeedOptions[i] ?? {};
+    // Per-feed busy: effective if EITHER global or per-feed flag is set.
+    const feedEffectiveBusy = options.busyOnly === true || feedOpts.busyOnly === true;
+
     for (const ev of calendars[i].events) {
+      // Per-feed: drop all-day events from this feed if hideAllDay is set.
+      if (feedOpts.hideAllDay && isAllDayEvent(ev)) continue;
+
       if (options.include && !summaryMatches(ev, options.include)) continue;
       if (options.exclude && summaryMatches(ev, options.exclude)) continue;
 
@@ -265,23 +339,51 @@ export function mergeCalendars(input: MergeInput): string {
       const rawUid = rawUidLine ? rawUidLine.slice(valueColonIndex(rawUidLine) + 1) : "";
       const dtstart = getProp(ev, "DTSTART") ?? "";
       const summary = getProp(ev, "SUMMARY") ?? "";
+
+      // Content-key for UID-less fallback and privacy-wins lookup.
       const contentKey = `${dtstart}\0${summary}`.toLowerCase();
 
-      // Assign an anonymous UID when absent, so we can track it.
-      let canonicalUid = rawUid;
-      if (!canonicalUid) {
+      if (rawUid) {
+        // Event HAS a UID: dedup only on UID — never collapse with a different UID.
+        if (seenUids.has(rawUid)) continue;
+        seenUids.add(rawUid);
+      } else {
+        // Event has NO UID: assign a synthetic one AND dedup by content key
+        // (DTSTART+SUMMARY) to collapse genuinely-duplicate UID-less events.
         anon += 1;
-        canonicalUid = `blend-anon-${i + 1}-${anon}@ical-blend`;
+        if (contentKey && seenAnonContentKeys.has(contentKey)) continue;
+        if (contentKey) seenAnonContentKeys.add(contentKey);
       }
 
-      // Dedup: skip if we've seen this UID OR the same DTSTART+SUMMARY combo.
-      if (seenUids.has(canonicalUid)) continue;
-      if (contentKey && seenDtStartSummary.has(contentKey)) continue;
+      // PRIVACY-WINS: if this event's UID appears in ANY masked feed (or, for
+      // UID-less events, if the same content-key appears in a masked feed),
+      // the survivor must be masked regardless of which feed it came from.
+      const identityIsMasked =
+        feedEffectiveBusy ||
+        (rawUid ? maskedUids.has(rawUid) : (contentKey ? maskedAnonKeys.has(contentKey) : false));
 
-      seenUids.add(canonicalUid);
-      if (contentKey) seenDtStartSummary.add(contentKey);
+      // Assign a canonical UID for output tracking.
+      const canonicalUid = rawUid || `blend-anon-${i + 1}-${anon}@ical-blend`;
 
-      let out = options.busyOnly ? busyMask(ev) : [...ev];
+      // Apply busy mask to this event if needed.
+      let out = identityIsMasked ? busyMask(ev) : [...ev];
+
+      // Apply prefix: prepend to SUMMARY with exactly ONE space separator.
+      // Trim any trailing whitespace off the stored prefix then add one space,
+      // so "[Work] " and "[Work]" both yield "[Work] Title" / "[Work] Busy".
+      if (feedOpts.prefix) {
+        const prefixStr = feedOpts.prefix.trimEnd() + " ";
+        out = out.map((l) => {
+          if (propName(l) === "SUMMARY") {
+            const idx = valueColonIndex(l);
+            if (idx >= 0) {
+              const currentValue = l.slice(idx + 1);
+              return `SUMMARY:${prefixStr}${currentValue}`;
+            }
+          }
+          return l;
+        });
+      }
 
       // Fix the UID in the output lines.
       const outUidLine = getPropLine(out, "UID");
@@ -290,7 +392,7 @@ export function mergeCalendars(input: MergeInput): string {
         out = out.flatMap((l) =>
           l.toUpperCase() === "BEGIN:VEVENT" ? [l, `UID:${canonicalUid}`] : [l]
         );
-      } else if (options.busyOnly) {
+      } else if (identityIsMasked) {
         // Replace original UID with an opaque hash to prevent identity leaks.
         const hashedUid = busyHashUid(canonicalUid);
         out = out.map((l) => (l === outUidLine ? `UID:${hashedUid}` : l));

@@ -1,0 +1,464 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Calendar Labs//Calendar 1.0//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Canada Holidays
+X-WR-TIMEZONE:UTC
+BEGIN:VEVENT
+SUMMARY:New Year's Day
+DTSTART;VALUE=DATE:20250101
+DTEND;VALUE=DATE:20250101
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/us/new-years-day.php to know more about New Year's Day. \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d87f71764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Valentine's Day
+DTSTART;VALUE=DATE:20250214
+DTEND;VALUE=DATE:20250214
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/us/valentines-day.php to know more about Valentine's Day. \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d880b1764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Flag Day
+DTSTART;VALUE=DATE:20250215
+DTEND;VALUE=DATE:20250215
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/canada/national-flag-of-canada-day.php to know more about Flag Day. \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d88181764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Family Day (AB\, BC\, SK\, ON)
+DTSTART;VALUE=DATE:20250217
+DTEND;VALUE=DATE:20250217
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/canada/family-day.php to know more about Family Day (AB\, BC\, SK\, ON). \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d88251764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Commonwealth Day
+DTSTART;VALUE=DATE:20250310
+DTEND;VALUE=DATE:20250310
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/canada/commonwealth-day.php to know more about Commonwealth Day. \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d88301764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:St. Patrick's Day
+DTSTART;VALUE=DATE:20250317
+DTEND;VALUE=DATE:20250317
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/us/st-patricks-day.php to know more about St. Patrick's Day. \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d883b1764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Good Friday
+DTSTART;VALUE=DATE:20250418
+DTEND;VALUE=DATE:20250418
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/us/good-friday.php to know more about Good Friday. \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d88461764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Easter Sunday
+DTSTART;VALUE=DATE:20250420
+DTEND;VALUE=DATE:20250420
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/us/easter.php to know more about Easter Sunday. \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d88511764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Easter Monday
+DTSTART;VALUE=DATE:20250421
+DTEND;VALUE=DATE:20250421
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/christian/easter-monday.php to know more about Easter Monday. \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d885d1764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Victoria Day (Many regions)
+DTSTART;VALUE=DATE:20250519
+DTEND;VALUE=DATE:20250519
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/canada/victoria-day.php to know more about Victoria Day (Many regions). \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d88681764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Canada Day
+DTSTART;VALUE=DATE:20250701
+DTEND;VALUE=DATE:20250701
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/canada/canada-day.php to know more about Canada Day. \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d88731764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Civic Holiday (Many regions)
+DTSTART;VALUE=DATE:20250804
+DTEND;VALUE=DATE:20250804
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/canada/provincial-day.php to know more about Civic Holiday (Many regions). \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d887f1764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Labour Day
+DTSTART;VALUE=DATE:20250901
+DTEND;VALUE=DATE:20250901
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/canada/labor-day.php to know more about Labour Day. \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d888b1764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Truth and Reconciliation Day
+DTSTART;VALUE=DATE:20250930
+DTEND;VALUE=DATE:20250930
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/canada/truth-and-reconciliation-day.php to know more about Truth and Reconciliation Day. \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d88961764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Thanksgiving Day
+DTSTART;VALUE=DATE:20251013
+DTEND;VALUE=DATE:20251013
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/canada/thanksgiving-day.php to know more about Thanksgiving Day. \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d88a21764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Halloween
+DTSTART;VALUE=DATE:20251031
+DTEND;VALUE=DATE:20251031
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/us/halloween.php to know more about Halloween. \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d88ae1764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Remembrance Day (Many regions)
+DTSTART;VALUE=DATE:20251111
+DTEND;VALUE=DATE:20251111
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/canada/remembrance-day.php to know more about Remembrance Day (Many regions). \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d88b91764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Christmas Day
+DTSTART;VALUE=DATE:20251225
+DTEND;VALUE=DATE:20251225
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/us/christmas.php to know more about Christmas Day. \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d88c61764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Boxing Day (Many regions)
+DTSTART;VALUE=DATE:20251226
+DTEND;VALUE=DATE:20251226
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/canada/boxing-day.php to know more about Boxing Day (Many regions). \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d88d11764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:New Year's Day
+DTSTART;VALUE=DATE:20260101
+DTEND;VALUE=DATE:20260101
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/us/new-years-day.php to know more about New Year's Day. \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d88de1764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Flag Day
+DTSTART;VALUE=DATE:20260215
+DTEND;VALUE=DATE:20260215
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/canada/national-flag-of-canada-day.php to know more about Flag Day. \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d88ea1764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Family Day (AB\, BC\, SK\, ON)
+DTSTART;VALUE=DATE:20260216
+DTEND;VALUE=DATE:20260216
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/canada/family-day.php to know more about Family Day (AB\, BC\, SK\, ON). \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d88f71764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Commonwealth Day
+DTSTART;VALUE=DATE:20260309
+DTEND;VALUE=DATE:20260309
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/canada/commonwealth-day.php to know more about Commonwealth Day. \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d89041764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:St. Patrick's Day
+DTSTART;VALUE=DATE:20260317
+DTEND;VALUE=DATE:20260317
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/us/st-patricks-day.php to know more about St. Patrick's Day. \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d89111764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Good Friday
+DTSTART;VALUE=DATE:20260403
+DTEND;VALUE=DATE:20260403
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/us/good-friday.php to know more about Good Friday. \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d891d1764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Easter Sunday
+DTSTART;VALUE=DATE:20260405
+DTEND;VALUE=DATE:20260405
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/us/easter.php to know more about Easter Sunday. \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d89291764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Easter Monday
+DTSTART;VALUE=DATE:20260406
+DTEND;VALUE=DATE:20260406
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/christian/easter-monday.php to know more about Easter Monday. \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d89361764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Victoria Day (Many regions)
+DTSTART;VALUE=DATE:20260518
+DTEND;VALUE=DATE:20260518
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/canada/victoria-day.php to know more about Victoria Day (Many regions). \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d89421764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Canada Day
+DTSTART;VALUE=DATE:20260701
+DTEND;VALUE=DATE:20260701
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/canada/canada-day.php to know more about Canada Day. \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d894f1764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Civic Holiday (Many regions)
+DTSTART;VALUE=DATE:20260803
+DTEND;VALUE=DATE:20260803
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/canada/provincial-day.php to know more about Civic Holiday (Many regions). \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d895b1764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Labour Day
+DTSTART;VALUE=DATE:20260907
+DTEND;VALUE=DATE:20260907
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/canada/labor-day.php to know more about Labour Day. \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d89681764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Truth and Reconciliation Day
+DTSTART;VALUE=DATE:20260930
+DTEND;VALUE=DATE:20260930
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/canada/truth-and-reconciliation-day.php to know more about Truth and Reconciliation Day. \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d89751764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Thanksgiving Day
+DTSTART;VALUE=DATE:20261012
+DTEND;VALUE=DATE:20261012
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/canada/thanksgiving-day.php to know more about Thanksgiving Day. \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d89821764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Halloween
+DTSTART;VALUE=DATE:20261031
+DTEND;VALUE=DATE:20261031
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/us/halloween.php to know more about Halloween. \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d898f1764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Remembrance Day (Many regions)
+DTSTART;VALUE=DATE:20261111
+DTEND;VALUE=DATE:20261111
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/canada/remembrance-day.php to know more about Remembrance Day (Many regions). \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d899c1764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Christmas Day
+DTSTART;VALUE=DATE:20261225
+DTEND;VALUE=DATE:20261225
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/us/christmas.php to know more about Christmas Day. \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d89aa1764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Boxing Day (Many regions)
+DTSTART;VALUE=DATE:20261226
+DTEND;VALUE=DATE:20261226
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/canada/boxing-day.php to know more about Boxing Day (Many regions). \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d89b71764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Boxing Day (Many regions) Holiday
+DTSTART;VALUE=DATE:20261228
+DTEND;VALUE=DATE:20261228
+LOCATION:Canada
+DESCRIPTION:Visit https://calendarlabs.com/holidays/canada/boxing-day.php to know more about Boxing Day (Many regions) Holiday. \n\n Like us on Facebook: http://fb.com/calendarlabs to get updates
+UID:6933b6a4d89c41764996772@calendarlabs.com
+DTSTAMP:20251205T235252Z
+STATUS:CONFIRMED
+TRANSP:TRANSPARENT
+SEQUENCE:0
+END:VEVENT
+END:VCALENDAR

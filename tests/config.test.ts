@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validateConfig } from "../lib/config";
+import { validateConfig, normalizeSource } from "../lib/config";
 
 const twoUrls = ["https://a.example.com/cal.ics", "https://b.example.com/cal.ics"];
 
@@ -15,7 +15,8 @@ describe("validateConfig", () => {
       sources: ["webcal://a.example.com/cal.ics", twoUrls[1]],
     });
     expect(r.ok).toBe(true);
-    expect(r.config?.sources[0]).toBe("https://a.example.com/cal.ics");
+    // sources now contains SourceConfig objects; use normalizeSource to access url.
+    expect(normalizeSource(r.config!.sources[0]).url).toBe("https://a.example.com/cal.ics");
   });
 
   it("accepts a single valid source URL", () => {
