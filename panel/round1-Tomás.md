@@ -1,50 +1,23 @@
-# Round 1 — Tomás (Operations Analyst, Excel/Tableau/Jira/Teams, Edge on locked-down Windows)
+# Tomás — Round 1
+- Advocacy: 9/10
+- Clarity: Yes
+- Value: Yes
+- Found-preview-cold: Yes
+- Top blocker: none (one nit: server-side fetch of internal URLs needs a network-reach caveat)
 
-## (b) Clarity — YES
-Within 5 seconds I knew exactly what this is. The H1 "One feed from all your calendars —
-work, personal, or team" plus "Paste 2–5 calendar links. Get one subscribable feed. No
-account." nails it. The "No account" and the bottom line "Your source URLs are encrypted
-into the feed link and fetched server-side... never stored persistently" are the two phrases
-that made me, a guy wary of pasting an internal feed URL into a random site, willing to keep
-going. The "Busy-only privacy mask" checkbox with "descriptions, locations and attendees are
-stripped" is the exact thing I came for.
+## Walkthrough
+- Cold open: headline "blend your work, personal, and shared calendars into one link... hand others a version with the private titles hidden." + "No account." nailed my exact job in one read.
+- "LOAD A SAMPLE FEED" populated two real public feeds (gov.uk holidays, a Chelsea fixtures ICS) instantly. Clicked PREVIEW MERGED CALENDAR: got per-source STATUS (✓ [Holidays] 83 fetched, ✓ [Personal] 325 fetched) and a chronological "PREVIEW · NEXT 15" with real titles + source prefixes.
+- Reconciliation line: "Fetched 408 events → kept 408 after filters & mask". Applied include filter "holiday" → it honestly dropped to "kept 33" and the list showed only holiday events. The count math MOVES and is verifiable — that's what earns my trust before I'd paste an internal URL.
+- Busy-only mask ON: every preview row became "[Source] Busy" — titles genuinely stripped in the preview, not just promised. This is the killer feature for handing a vendor a stripped feed.
+- Bad URL test: typed a garbage domain → red "✗ not-a-real-domain-xyz123.com — fetch failed" + "No feeds could be fetched — check the URLs above." Honest failure with a reason. No silent fail, no fake success.
+- 0 console errors throughout.
 
-## (c) Value — YES
-Today I either subscribe to feeds one-by-one in Outlook/Teams (which won't merge a vendor a
-single stripped link) or I'd ask IT, who'd block it. There is no Excel/Tableau workaround for
-"hand a vendor a busy-only version of my work calendar." This does it in one session, no
-install (IT blocks installs — browser tool is the whole appeal), no login. The merge worked:
-2 holiday feeds → one .ics with a copyable URL + webcal + "Add to Google Calendar" + a
-"Preview — exactly what subscribers see" pane. That preview is what closes the trust gap for me.
-
-## Per-feed keyword fields — FOUND COLD, and they work
-Yes, I found them cold. Each feed has an "Options" disclosure; opening it shows
-"Keywords — this feed only / Include / Exclude" with placeholders `piano, soccer` and
-`standup, lunch`, and the line "These ADD to the global keyword filters above — an event must
-pass both." That sentence is what told me per-feed AND global compose. After saving, the
-collapsed label reads "Options · on" so I can see at a glance which feed has filters — good.
-
-I VERIFIED behavior, not just UI: I put 2 feeds (US + Canada holidays), set the US feed's
-per-feed EXCLUDE = "Day" and the GLOBAL include = "Day", created the feed, and curled the
-generated .ics. Result: every US "...Day" event was dropped, Canada "...Day" events kept —
-exactly the AND composition the helper text promised. Global filter alone and per-feed alone
-both fired correctly.
-
-## Blockers / friction (minor)
-- Keyword match is SUBSTRING, not word-boundary: include "Day" also kept "Holiday" (contains
-  "day"). Fine once you know, but a non-power-user pasting "PM" could nuke unrelated titles.
-  A one-line note ("matches anywhere in the title") would prevent foot-guns.
-- The generated feed URL is plain text, not in a copy-input — there IS a "Copy" button so it's
-  fine, but I couldn't grab it programmatically; minor.
-- I'd want explicit reassurance that the per-feed mask hides titles for ONE feed while keeping
-  others detailed — the Options copy says exactly that, so this is satisfied, noting for record.
-
-## Scores
-(a) Advocacy: 8/10. I'd bring this up unprompted to a peer who needs to share a stripped
-calendar with a vendor — that's a real, recurring ops pain with no clean alternative. Not a 9
-only because the substring-match gotcha and "is this REALLY safe with an internal corporate
-feed URL" residual caution would make me test it once myself before recommending company-wide.
+## Answers
+1. CLARITY: Yes. In ~30s I knew exactly what it does and that it's for me. Helpful words: "private titles hidden", "No account", "Preview & test them". Nothing confused me.
+2. VALUE: Yes. Today I manually cross-check Teams/Outlook against a SharePoint shift feed — no clean way to merge, and zero safe way to share a stripped version. Excel/Tableau don't touch ICS. This does the merge AND the busy-only mask I can verify with my own eyes before exposing anything. Easily >once/week.
+3. ADVOCACY: 9/10. Found Preview cold — yes. I'd bring this up unprompted to teammates fighting calendar sprawl. The preview-before-subscribe, visible reconciliation, and verifiable busy-mask directly answer my "wary of pasting company data" fear. Not a 10 only because URLs are "fetched server-side" — for an INTERNAL feed URL behind our firewall, a Vercel server can't reach it, and the page doesn't warn me that a private/intranet feed must be publicly reachable. I'd hit a confusing fetch-failed and wonder if it's me or them. A one-line "feeds must be reachable from the public internet" caveat would close that.
 
 ```json
-{"tester": 4, "round": 1, "clarity": "Yes", "value": "Yes", "advocacy": 8, "topComplaints": ["keyword match is substring not word-boundary — 'Day' also matched 'Holiday'; no inline note warning of over-matching", "residual trust caution about pasting an internal/corporate feed URL despite the 'encrypted, not stored' line"], "priorConcernsAddressed": "n/a"}
+{"tester": 1, "round": 1, "clarity": "Yes", "value": "Yes", "advocacy": 9, "topComplaints": ["No caveat that server-side fetch can't reach internal/firewalled feeds — my exact use case may silently fetch-fail"], "priorConcernsAddressed": "n/a"}
 ```

@@ -1,45 +1,51 @@
-# ical-blend — Round 1 — Jules (Content & community marketer, medium-tech, 50/50 desktop/mobile)
+# Jules — Round 1 (re-test; I was tester 3 prior round)
+- Advocacy: 9/10
+- Clarity: Yes
+- Value: Yes
+- Found-preview-cold: Yes
+- Top blocker: none (one nit only)
+- Prior concern addressed: Yes
 
-Motivation: merge several community-event ICS feeds (Discord, Luma, newsletter cal) into one
-keyword-filtered subscribe-able feed — and I refuse to log in for a job this small.
+## Re-check of my exact prior blockers
+1. "No test/validate feed before Create — dead/auth feeds fail silently after subscribe."
+   FIXED. The page now leads with Preview. A bad URL shows ✗ "...example — fetch failed",
+   the good feed still gets ✓ 83 events, the count honestly drops ("Fetched 83 → kept 83"),
+   and a banner reads "1 source failed — its events are not included." I see the dead feed
+   BEFORE I ever click Create. This is exactly what I asked for.
+2. "Dense helper copy; per-feed vs global AND relationship not obvious."
+   IMPROVED, not perfect. Still a fair amount of helper text, but the Preview-first flow
+   means I now learn by doing instead of reading — I no longer have to parse the copy to
+   trust it, the counts do that. I'll call this addressed for my purposes.
 
-## What I did (cold)
-Pasted two real public ICS feeds (officeholidays USA + Google USA holidays). Found the per-feed
-"Options" disclosure, opened feed 1, set per-feed Include="Regional". Set GLOBAL Exclude="Eve".
-Hit Create feed. Got an http feed URL + webcal:// link + "Add to Google Calendar". Subscribed-as
-test: fetched the generated feed — 313 events, NO "Eve" titles (global exclude worked), and feed 1
-kept only "Regional" USA: events while feed 2 was untouched. AND-composition is honest. Repeated on
-375px mobile — per-feed Options expand and the Include/Exclude fields are fully reachable.
+## Walkthrough (incl. mobile notes)
+- LOAD A SAMPLE FEED (cold): populated 2 real URLs (gov.uk holidays + a fixtures .ics).
+  Did NOT auto-preview — one extra click on Preview. Mild ding vs "instant merge."
+- PREVIEW MERGED CALENDAR: per-source ✓ status + "Fetched 408 → kept 408 after filters &
+  mask" + chronological NEXT 15 with [source] labels. Counts add up — I trust it.
+- Keyword filter include="Chelsea": 408 → kept 325, list narrowed correctly.
+- Busy-only mask: titles → "Busy", times kept. The shareable privacy version I wanted.
+- BAD URL: honest ✗ failed-with-reason + partial success preserved (see prior-concern #1).
+- Create feed: real subscribable feed — https + webcal:// links, Add-to-Google-Calendar
+  button, per-app instructions, honest privacy note (URLs encrypted into link but transit
+  the server). Copy verified (clipboard read returned the URL; label → "Copied!"). I curled
+  the feed endpoint: valid VCALENDAR, all 408 VEVENTs, source prefixes intact. Not vapor.
+- Mobile 375px: no horizontal overflow (scrollWidth=375); full flow incl create+copy works.
 
-## (a) Advocacy: 8/10
-This is the no-login ICS merger I've actually wanted and never found free. It does the merge, the
-keyword filter, AND gives me copy-paste subscribe steps for Google/Apple/Outlook plus a "Preview —
-exactly what subscribers see" list. That preview is the trust-maker for a marketer publishing a feed.
-Not a 9 because: my real feeds are Discord/Luma/Mastodon — I can't tell cold whether webcal auth feeds
-or feeds behind a token URL will fetch, and there's no "test this feed" check before Create, so I'd
-discover a dead feed only after subscribing. Also the helper text is dense; the per-feed vs global
-distinction took me a beat. Fix those and it's a 9 I'd post about.
+Nit: the "1 source failed" warning is injected as a fake event at the top of NEXT-15 —
+clever, but reads oddly next to real events.
 
-## (b) Clarity: Yes
-"One feed from all your calendars" + "Paste 2–5 calendar links. Get one subscribable feed. No account."
-told me what and who in under 5 seconds. The "No account" line is what made me actually try it.
-
-## (c) Value: Yes
-Today I manually eyeball multiple calendars or paste links into a clunky aggregator that wants a login.
-This merged + filtered in one session with zero signup and gave me a real webcal link. Saves meaningful
-effort vs. my current "subscribe to 4 feeds separately and mute the noise" workflow.
-
-## Per-feed keyword fields — found COLD? YES
-The global include/exclude even points to it ("Want different keywords per feed? Use that feed's
-Options."). Opening Options revealed "Keywords — this feed only" Include/Exclude with the exact
-`piano, soccer` / `standup, lunch` placeholders, comma = OR. Both per-feed and global filters worked and
-composed with AND, stated plainly in the helper text. Minor: collapsed-by-default means a hurried user
-might miss per-feed filtering and assume only global exists — the pointer text mitigates it.
-
-## Top blockers
-1. No "test/validate feed" before Create — a dead or auth-gated Discord/Luma feed fails silently post-subscribe.
-2. Dense helper copy; per-feed-vs-global AND relationship takes a second read.
+## Answers
+1. CLARITY: Yes — "blend your work, personal, and shared calendars into one link… No
+   account" + "Paste 2–5 calendar links. Preview & test them, then get one feed" told me
+   what and who in <10s. "No account" is what makes me try it.
+2. VALUE: Yes — today I subscribe to my Discord/Luma/newsletter ICS feeds separately and
+   mute noise; no free no-login tool merges + keyword-filters + masks them into one webcal
+   link. This does it in one session. I'd use it whenever I re-cut feeds — >1x/week in
+   event season.
+3. ADVOCACY: 9/10 (up from my prior 8) — my #1 blocker is gone, so I'd now post about it
+   unprompted. Held off 10 only by the sample not auto-previewing and the fake-warning-event
+   nit; neither blocks the job.
 
 ```json
-{"tester": 3, "round": 1, "clarity": "Yes", "value": "Yes", "advocacy": 8, "topComplaints": ["No pre-Create feed validation/test — auth-gated or dead feeds fail silently after subscribe", "Dense helper copy; per-feed vs global AND relationship not instantly obvious"], "priorConcernsAddressed": "n/a"}
+{"tester": 3, "round": 2, "clarity": "Yes", "value": "Yes", "advocacy": 9, "topComplaints": ["Sample feed loads URLs but does not auto-preview the merge (one extra click)", "'1 source failed' warning injected as a fake event inside the real next-15 list"], "priorConcernsAddressed": "all"}
 ```

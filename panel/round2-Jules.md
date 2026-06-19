@@ -1,53 +1,54 @@
-# ical-blend — Round 2 — Jules (Content & community marketer, medium-tech, 50/50 desktop/mobile)
+# Jules — Round 2 (re-test; I was tester 3)
 
-Motivation: merge my Discord/Luma/newsletter community ICS feeds into one keyword-filtered,
-subscribe-able feed — and refuse to log in for a job this small.
+- Advocacy: 9/10
+- Clarity: Yes
+- Value: Yes
+- Found-preview-cold: Yes
+- Top blocker: the "1 source failed" line still rides inside the next-15 event list as a fake dated event
+- Prior concerns addressed: some
 
-## Re-check of MY round-1 complaints
-1. "Collapsed per-feed filters get missed / no visible active-filter signal" — FIXED. After I
-   set per-feed Include="Regional" and collapse the row, feed 1 now shows a highlighted blue
-   `Options & filters · on` plus an inline `include: Regional` chip; feed 2 stays neutral
-   (`prefix · keyword filter · mask`). I can SEE which feed is filtered without expanding. Big.
-2. "No pre-Create test/validate feed — dead/auth-gated Discord/Luma feeds fail silently" —
-   NOT addressed. Still no "test this feed" button before Create. Mitigated (not solved) by the
-   post-Create "313 events from 2 sources" caption + "Preview — exactly what subscribers see"
-   list, which tells me each source contributed — but I learn a dead feed only AFTER creating.
+## Re-check of my EXACT prior blockers
+1. "Load a sample feed loads URLs but does NOT auto-preview — one extra click."
+   FIXED. One click on LOAD A SAMPLE FEED now populates 2 feeds AND auto-runs the merge:
+   I immediately saw STATUS (✓ [Holidays] 53 / ✓ [Personal] 355), "Fetched 408 events →
+   kept 408 after filters & mask", and the next-15 list — zero extra clicks. Exactly what
+   I asked for; this is the "instant merge" feel I wanted.
+2. "'1 source failed' warning injected as a fake event inside the real next-15 list."
+   NOT FIXED. With a clean sample it never appears (good). But when I swap in a dead URL
+   (my real case — flaky Discord/Luma feeds), the next-15 list's FIRST row is still a
+   fabricated event: dated "Fri, Jun 19", titled "iCal Blend: 1 source failed", tagged
+   [Personal]. It already shows correctly in STATUS (✗ [Holidays] — fetch failed) AND as a
+   red banner "1 source failed — its events are not included." So the in-list fake event is
+   now redundant AND misleading — it looks like a real calendar entry I'd subscribe to.
 
-## What I did (cold-ish, round 2)
-Pasted officeholidays USA + Google USA-holidays ICS. Opened feed-1 Options, set per-feed
-Include="Regional", collapsed it (saw the new `· on` + `include: Regional` badge), set GLOBAL
-Exclude="Eve", Create feed. Subscribe-as test: fetched the generated /api/feed/<token> → HTTP
-200, 313 VEVENTs, ZERO "Eve" titles (global exclude honored), feed 1 reduced to "Regional
-Holiday" titles only while feed 2 untouched. AND-composition is honest end-to-end. Got http +
-webcal + "Add to Google Calendar" links with Copy buttons, per-platform subscribe steps, and a
-subscriber-accurate preview. No console/page errors.
+## SPECIFICALLY CONFIRMED this round
+1. One-click sample → populated preview: YES (verified above).
+2. Reconciliation count + spacing: CLEAN. "Fetched 408 events → kept 408 after filters &
+   mask" — proper spaces, real → arrow, no glued digits. Filter include="holiday" dropped
+   it to "kept 33" with a "(375 removed by filters/mask)" subline and the list narrowed to
+   only [Holidays] holiday events. Keyword filter visibly affects the count. ✓
+3. Mobile 375px: NO horizontal overflow (scrollWidth=375=innerWidth). Full stacked layout,
+   sample one-click + preview + reconciliation + next-15 all render and read fine on a
+   phone. ✓
+4. No login: confirmed — "No account, no database. Your source URLs are encrypted into the
+   feed link and fetched server-side on each refresh — never stored persistently." This is
+   why I'd actually use it for a small job.
 
-## (a) Advocacy: 9/10
-Last round 8. The active-filter badge is the exact fix that pushes this to a 9 — the per-feed
-vs global model is now legible AT A GLANCE, not just on a careful read. It's the free, no-login
-ICS merger+filter I've wanted, the preview earns my trust to publish it, and the copy is tighter.
-Held off 10 only because there's still no pre-Create feed reachability check, so an auth-gated
-Luma/Discord token feed could silently contribute zero and I'd only catch it in the preview count.
-
-## (b) Clarity within 5 seconds: Yes
-"One feed from all your calendars" + "Paste 2–5 calendar links. Get one subscribable feed. No
-account." The "No account" is what makes me try it. The `prefix · keyword filter · mask` hint on
-each row now tells me filtering is per-feed before I even click.
-
-## (c) Value: Yes
-Today I subscribe to 4 community feeds separately and mute the noise, or paste links into a
-login-walled aggregator. This merged + keyword-filtered in one session, zero signup, real webcal
-link. Saves meaningful effort and the keyword filter is exactly my use case.
-
-## Per-feed keyword filters AND active-filter badge found COLD: Y
-Found both. `Options & filters` discloses "Keywords — this feed only" Include/Exclude with
-`piano, soccer` / `standup, lunch` placeholders and "These ADD to the global filters — an event
-must pass both." Collapsed badge `Options & filters · on` + `include: Regional` confirmed visually.
-
-## Top blockers
-1. Still no pre-Create "test this feed" — auth-gated/dead community feeds fail silently until preview.
-2. Minor: webcal://localhost link is a local artifact; on prod I'd want the webcal host to be obvious.
+## Answers
+1. GUT REACTION: Yes, I'd use this no-login. In <10s the headline + "Paste 2–5 calendar
+   links. Preview & test them, then get one feed. No account." tells me what and who. The
+   one-click sample now sells it instantly — I see a real merged calendar before typing
+   anything. This is the merged + keyword-filtered + masked feed I want for my Discord/Luma/
+   newsletter ICS feeds, and nothing free/no-login does all three.
+2. TOP BLOCKER: the fabricated "1 source failed" row inside the next-15 list (only on a
+   feed failure). It's small, but it's the one thing that makes me trust the output slightly
+   less — a status I'm reading as data. The STATUS row + banner already cover it; drop it
+   from the event list.
+3. CLARITY 9, VALUE 9, ADVOCACY 9. My #1 blocker (no auto-preview) is gone so I'd bring it
+   up unprompted. Held off 10 only by the still-present fake-failure-event nit.
 
 ```json
-{"tester": 3, "round": 2, "clarity": "Yes", "value": "Yes", "advocacy": 9, "topComplaints": ["Still no pre-Create feed reachability/test — auth-gated or dead community feeds contribute 0 silently, caught only in post-create preview count", "No way to confirm a token-gated Luma/Discord feed authenticated before subscribing"], "priorConcernsAddressed": "some"}
+{"tester": 3, "round": 2, "clarity": "Yes", "value": "Yes", "advocacy": 9, "topComplaints": ["On a feed failure, '1 source failed' still appears as a fake dated event inside the next-15 list (already covered by STATUS row + red banner — redundant and misleading)", "Minor: a lot of helper copy around filters/mask, though preview-first lets me learn by doing"], "priorConcernsAddressed": "some"}
 ```
+
+Jules — adv:9 clarity:9 value:9 — top blocker: on a feed failure the "1 source failed" notice still renders as a fake dated event inside the next-15 list (already shown in STATUS + banner); drop it from the event list.

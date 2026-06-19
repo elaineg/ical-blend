@@ -1,63 +1,31 @@
-# Round 2 — Aisha (Product designer, judges craft hard)
+# iCal Blend — Round 2 — Aisha (Product designer, craft-hard)
 
-**Advocacy: 9/10** · Clarity: Yes · Value: Yes
-**Found per-feed keyword filters + active-filter badge cold: YES**
+## Re-check of my round-1 blocker (the missing-space reconciliation count)
+**FIXED — everywhere I could push it.** I checked the three states where a space bug hides:
+- Default sample preview: `Fetched 408 events → kept 408 after filters & mask` ✓
+- With include filter `holiday` so kept ≠ fetched: `Fetched 408 events → kept 33 after filters & mask` ✓ (the exact kept≠fetched case where "408after" appeared in R1)
+- With busy-only mask on: `Fetched 408 events → kept 408 after filters & mask` ✓
+My digit-glued-to-word scan (`\d(after|kept|events)`) returned **null** every time. The em-dash in per-source status (`[Personal] — 325 events fetched`) only *looked* glued in raw innerText; in the DOM it's a separate `ml-1` span and renders with a real gap. Environment artifact, not a defect.
 
-## (b) Purpose clear in 5s? YES
-H1 "One feed from all your calendars — work, personal, or team" + the sub "Paste 2–5
-calendar links. Get one subscribable feed. No account." told me exactly what it does and
-that there's no signup. The "Source feeds (ICS / webcal URLs)" label and pre-filled
-example placeholders made the first action obvious. No hunting.
+## 1. Gut reaction (first 30s) — does craft feel considered now?
+Yes. Generous whitespace, sane hierarchy, the headline does real work ("subscribe once… hand others a version with the private titles hidden"). The disabled Preview button paired with the line "Add a feed URL to preview." is a considered empty state — most builders leave that button live-but-dead. Status uses semantic spans + `aria-label="alive"` on the ✓. Reads like someone who cares.
 
-## (c) Valuable? YES
-Today I stitch my Google + partner's shared + kids'-school ICS by manually subscribing to
-each in Apple Calendar and color-juggling — and I can't filter or relabel them. This gives
-me ONE link, per-feed prefixes ("[Kids] "), per-feed keyword filters, and a busy-only
-privacy mask for the shared version. The green result banner "21 events from 2 sources …
-Only events matching 'holiday'" + a live Preview of the actual merged events sold me — I
-could verify the filter worked before subscribing. That's the considered touch I look for.
+## 2. One-click sample (confirm)
+**Confirmed.** A single click on "Load a sample feed" populated two normalized sources (`[Holidays]`, `[Personal]`), per-source fetch status, the reconciliation line, AND the next-15 events — no second click, no spinner-then-nothing. Exactly what "preview & test before subscribing" should feel like.
 
-## Per-feed filters + badge (the ask)
-- "Options & filters" disclosure with micro-hint `prefix · keyword filter · mask` reads
-  clearly — it previews what's inside without me clicking. Good.
-- Opened it cold, found: feed prefix, mask-titles, show-as-Busy, hide all-day, and per-feed
-  Include/Exclude keywords. The copy "Only this feed's events are filtered. These ADD to
-  the global keyword filters above — an event must pass both" is precise and answers the
-  exact question I'd have. Considered.
-- Active-filter badge WORKS: after setting prefix+keyword and collapsing, the row label
-  flips to indigo "Options & filters · on" with a summary "include: recital · prefix",
-  while the untouched feed stays muted gray "prefix · keyword filter · mask". Great
-  at-a-glance state; the color/weight contrast draws the eye correctly.
-- Global "Only include / Exclude events containing" present, with a helpful cross-link
-  "Want different keywords per feed? Use that feed's Options & filters."
+## 3. Biggest remaining friction / top blocker
+No blocker. Nits only:
+- The sample only ever shows the happy path — every source is ✓ alive. I can't tell from it what a dead/404 feed looks like in this status list; a deliberately-broken sample source would teach the failure state.
+- The next-15 list repeats holiday titles across years (two "Summer bank holiday", two "Christmas Day") — correct data, but causes a brief "wait, dupes?" double-take. A year hint or relative date would kill it.
+- Copy tone is consistent and human; no clumsy strings found.
 
-## Caption / copy / spinner
-- Subscribe caption is honest and well-pitched: "Your private subscribe link — paste it
-  into Google Calendar, Apple Calendar, or Outlook to subscribe. Anyone with this link can
-  read your merged calendar; treat it like a password." The deeper privacy note even admits
-  URLs "do transit the server" — trustworthy, not over-claiming.
-- Copy button works (label → "Copied!", clipboard verified). Add-to-Google button, webcal
-  link, and per-app subscribe instructions all present.
-- Empty state: clicking Create with no URL shows "Add at least one calendar feed URL to get
-  started." — friendly, actionable.
-- Partial-failure state: when one source 404s, a yellow banner says "1 source could not be
-  fetched" and counts only what merged. Honest error craft — rare and appreciated.
+## Scores
+- Clarity: 9 — one-breath pitch to a friend: "merge 2–5 calendar feeds into one subscribable link, filter or hide private titles, no account."
+- Value: 8 — solves my real family-feed merge (personal + partner + kids' school ICS) in one link; the privacy mask is the part I'd actually brag about.
+- Advocacy: 9 — my R1 craft blocker is genuinely gone, the preview is one-click and honest. Only the absent failure-state demo + duplicate-holiday double-take keep it off a 10; fix those and I bring it up unprompted in design Slack.
 
-## What holds it back from 10 (craft nits)
-1. **Create spinner is too subtle.** A `.animate-spin` element exists mid-request, but the
-   button text stays "Create feed" and looks identical to idle. As a designer I want the
-   button to read "Creating…" / disable + show the spinner IN the button so there's zero
-   ambiguity. Right now a slow fetch looks like nothing happened.
-2. The success banner, instructions, and "recent blends" stack into a long scroll with no
-   visual hierarchy break between "your link" and "how to subscribe" — a card boundary or
-   step numbering would help the eye.
-3. Feed-URL field shows a raw 200-char opaque token; fine functionally, but visually noisy.
-   Minor.
-
-None are blockers. The flow is genuinely considered — empty states, micro-hints, honest
-error/privacy copy, and the active-filter badge are exactly the details a clumsy tool skips.
-I'd bring this up to a peer unprompted; the subtle spinner is the only thing keeping it off a 10.
+Aisha — adv:9 clarity:9 value:8 — top blocker: none; sample shows only the happy path (no dead-feed state) and repeated holiday titles across years cause a brief "are these dupes?" double-take
 
 ```json
-{"tester": 1, "round": 2, "clarity": "Yes", "value": "Yes", "advocacy": 9, "topComplaints": ["Create spinner too subtle — button text stays 'Create feed', slow fetch looks like nothing happened", "Result page is a long undifferentiated scroll; needs card/step hierarchy between link and instructions"], "priorConcernsAddressed": "n/a"}
+{"tester": 1, "round": 2, "clarity": "Yes", "value": "Yes", "advocacy": 9, "topComplaints": ["Sample feed only shows happy path — no dead/404 source state demonstrated in the status list", "Next-15 preview repeats holiday titles across years with no year/relative-date hint, causing a 'are these dupes?' double-take"], "priorConcernsAddressed": "all"}
 ```

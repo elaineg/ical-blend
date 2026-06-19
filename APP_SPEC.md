@@ -50,13 +50,24 @@ MergeCal at $2/mo. Nothing free + hosted + no-signup does merge + filter + busy-
    leaks. If one source fails to fetch, the remaining sources still merge and the
    response includes an all-day marker event "iCal Blend: 1 source failed" rather than
    erroring.
-3. **Preview before subscribing.** After "Create feed", the builder page shows the next
-   ~10 upcoming events from the merged result (title, date/time, which filters/mask
-   applied) so the user can confirm the filters and mask did what they expect before
-   copying the URL into their calendar app. The preview reflects per-feed rules: titles
-   show their feed's prefix already prepended, per-feed-masked feeds appear as "Busy",
-   all-day events hidden from a feed do not appear, and events dropped by a feed's own
-   include/exclude keyword rule do not appear.
+3. **Preview & test your feeds (before creating the subscribe link).** While the user is
+   still configuring (source URLs + global/per-feed filters, prefixes, masks) and BEFORE any
+   subscribe URL is generated, a "Preview merged calendar" action fetches all source feeds
+   live and shows three things: (a) PER-SOURCE FETCH STATUS — for each source row, ✓ alive
+   with the count of events fetched, or ✗ failed with a human reason (timeout / 404 /
+   auth-gated / not an ICS / empty feed) — so a dead or auth-gated feed that silently
+   contributes 0 events is impossible to miss; (b) a RECONCILIATION COUNT — a prominent
+   "Fetched X events → kept Y after filters & mask" line so over-filtering or silent partial
+   merges are obvious; (c) the rendered PREVIEW — the next ~10–15 upcoming events
+   chronologically, each with its (masked-or-real) title, date/time, and a source label/prefix.
+   The preview applies EVERY global + per-feed rule (global keyword filters, hide-all-day,
+   per-feed prefix/mask/hide-all-day/keywords, and the global busy mask) byte-faithfully — it
+   calls the SAME server-side fetch/merge/filter/mask pipeline as the served feed (flow 2),
+   not a forked re-implementation, so what the user previews is exactly what subscribers
+   receive. The same preview is also re-shown after "Create feed" to confirm before copying.
+   A one-click "Load a sample feed" populates a working example config (a public holidays ICS
+   plus a sample personal feed) so a brand-new cold visitor sees a populated merge + preview
+   before pasting any private links.
 
 ## Success checks
 
@@ -106,6 +117,31 @@ MergeCal at $2/mo. Nothing free + hosted + no-signup does merge + filter + busy-
   per-feed keyword filtering.
 - The builder page works with no login: a fresh incognito browser can complete flow 1 and
   see the flow 3 preview.
+- PRE-CREATE PREVIEW: with 2 valid source URLs entered and NO subscribe URL yet generated,
+  clicking "Preview merged calendar" renders an upcoming-events list (≥1 event) without
+  producing a feed token — verifiable in-browser that the preview appears before any
+  `/api/feed/<token>` URL exists on the page.
+- PER-SOURCE STATUS: with one valid source and one dead source (404/timeout/non-ICS),
+  the preview shows a per-row ✓ for the valid source with its fetched-event count and a
+  per-row ✗ for the dead source with a human reason string (e.g. "404 — feed not found" /
+  "timed out" / "not a calendar feed" / "empty feed"); the ✗ row's status is visible at
+  375px width without hover.
+- RECONCILIATION COUNT: the preview shows a "Fetched X events → kept Y after filters & mask"
+  line where X equals the sum of per-source fetched counts and Y equals the rendered/merged
+  kept count; with an exclude-keyword that matches some events, Y is strictly less than X,
+  and with a filter that drops everything Y shows 0 with an explicit "0 kept — your filters
+  removed every event" message rather than an empty list with no explanation.
+- PREVIEW IS BYTE-FAITHFUL: a feed previewed with the global busy mask (or a per-feed mask)
+  on shows preview rows whose titles read "Busy"; a feed with a per-feed exclude-keyword
+  shows NO preview row for an event matching that keyword — i.e. the preview output matches
+  what `curl` of the eventual served feed returns for the same config (same merge pipeline).
+- DEMO FEED ONE-CLICK: clicking "Load a sample feed" on a cold/empty page populates the
+  source URL field(s) with a working example config AND, on previewing, renders a non-empty
+  upcoming-events preview with per-source ✓ status and a reconciliation count.
+- PREVIEW EMPTY/ALL-FAILED STATES: with 0 source URLs entered the "Preview merged calendar"
+  action is disabled or shows "Add a feed URL to preview" (never a misleading "0 events");
+  with ALL sources failing, the preview shows every row as ✗ with reasons and a
+  "No feeds could be fetched" summary instead of a blank or fake-zero preview.
 
 ## Out of scope
 

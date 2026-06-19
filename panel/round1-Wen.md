@@ -1,54 +1,21 @@
-# Round 1 — Wen (Marketing data analyst, BigQuery/Sheets/Looker/dbt/GA4)
+# Wen — Round 1
+- Advocacy: 9/10
+- Clarity: Yes
+- Value: Yes
+- Found-preview-cold: Yes
+- Top blocker: none (only a nit: sample populates URLs but doesn't auto-render the merge; I had to click Preview)
+- Prior concern addressed: Yes
 
-Cold-used at 1440px desktop. Motivation: merge a campaign-launch feed + a dbt/pipeline-run
-feed + personal into ONE subscribable feed, but I distrust invisible transforms — so I
-checked whether every event survives and whether filtering is auditable.
+## Walkthrough
+1. Cold load: headline "blend your work, personal, and shared calendars into one link" + "Preview & test them, then get one feed. No account." I knew what this was in <10s.
+2. "Load a sample feed" cold: populated two REAL public URLs (UK gov bank holidays + a Chelsea fixtures .ics). It did NOT auto-preview — URLs filled, but I had to click "Preview merged calendar" to see anything. Minor friction; I expected an instant populated merge.
+3. Preview with sample: per-source STATUS with ✓ and counts — "[Holidays] 83 events fetched", "[Personal] 325 events fetched". Reconciliation line: "Fetched 408 events → kept 408 after filters & mask". Chronological NEXT 15 list with [source] labels. Clean.
+4. BAD URL test (swapped feed 2 to a 404): HONEST. "✗ [Personal] — feed not found (404)", recon dropped to "Fetched 83 → kept 83", plus "1 source failed — its events are not included." AND it injected a visible "iCal Blend: 1 source failed" event into the feed so a subscriber sees the failure in their calendar. Exactly the no-silent-failure behavior I demand.
+5. Filter scrutiny (exclude "bank"): "Fetched 408 → kept 375 after filters & mask" + explicit "(33 removed by filters/mask)". 408−33=375 reconciles to the event. Bank-holiday rows visibly disappeared from the list.
+6. Mask test: count held at 375 (mask transforms, doesn't drop), titles became "[Holidays] Busy" with source label + times kept. Correct accounting.
+7. Create feed: no signup. Got https:// + webcal:// links + Google Calendar button. Honest note: "URLs are never stored persistently, but they do transit the server." I curl'd the live feed endpoint: valid VCALENDAR, exactly 408 VEVENTs — matches the blend-time count byte-for-byte.
 
-## (a) Advocacy: 9/10
-I would bring this up unprompted in my team Slack. It does the thing I'd otherwise pay
-Calendar.com / OneCal for, free, no signup, and — crucially for me — it does NOT hide the
-transform. The 1-point hold-back is below, not a dealbreaker.
-
-## (b) Clarity: YES
-Within 5s the H1 "One feed from all your calendars — work, personal, or team" + subline
-"Paste 2–5 calendar links. Get one subscribable feed. No account." told me exactly what it
-is and who it's for. The two URL fields with `https://example.com/calendar-1.ics`
-placeholders made the input obvious. Nothing confused me.
-
-## (c) Value: YES
-Today I'd hand-merge in Google Calendar (subscribe to each separately — no real merge) or
-script an ics concat in a Colab notebook and re-host it. This is faster AND it gave me the
-audit trail I never get otherwise.
-
-## What I actually verified (data-hygiene scrutiny — this is why I trust it)
-Added 2 real feeds: gov.uk England bank holidays (83 events) + Google USA holidays (317).
-- Unfiltered merge: UI said "400 events from 2 sources"; I fetched the real Feed URL over
-  HTTP — `text/calendar`, **exactly 400 VEVENTs**, "Christmas Day" titles preserved verbatim.
-  83+317=400. Nothing dropped, nothing silently rewritten. This is the whole ballgame for me.
-- GLOBAL exclude "christmas" → UI 364, source math says 400−36=364. Exact.
-- GLOBAL include "bank" → UI 33, and only the UK feed has "bank" titles (33). Exact.
-- PER-FEED include "bank" on feed 1 only → UI 350, served feed 350 VEVENTs. = 33 UK bank +
-  317 USA untouched. Per-feed AND-composition is correct; feed 2 was NOT filtered. Verified
-  Juneteenth (USA) survived. Filters case-insensitive as labeled.
-- The "Preview — exactly what subscribers see / Masks, labels and filters are already
-  applied below — this is the real output" panel is exactly the transparency I demand.
-
-## Per-feed keyword fields — could I find them COLD?
-Partially. They're inside a collapsed "Options" disclosure (▸ Options) per feed, so they are
-NOT visible at rest — I had to click to reveal include/exclude (placeholders `e.g. piano` /
-`e.g. standup`). BUT the global filter block explicitly says "Want different keywords per
-feed? Use that feed's Options," and the privacy mask says the same. That pointer is what made
-me go open Options. Good signposting; a cold user who skips the helper text could miss them.
-
-## What holds it back (the 1 point)
-1. Honesty note I respect but want louder: "URLs are encrypted into the link... but they do
-   transit the server." For a data-hygiene person that's fine because it's stated — keep it.
-2. Per-feed filters are discoverable only via prose, not a visible affordance. A "filter"
-   icon/badge on the collapsed Options row would make it self-evident without reading.
-3. No CSV/text export of the merged event LIST for spot-auditing outside a calendar app — I
-   verified by fetching .ics myself; a normal analyst can't. A "download .ics" or
-   copy-event-list would let me audit without curl.
-
-```json
-{"tester": 7, "round": 1, "clarity": "Yes", "value": "Yes", "advocacy": 9, "topComplaints": ["per-feed keyword fields hidden in collapsed Options — discoverable only via helper prose, no visible filter affordance", "no plain download/export of merged event list for non-curl auditing", "server-transit of source URLs is stated but easy to miss"], "priorConcernsAddressed": "n/a"}
-```
+## Answers
+1. CLARITY: Yes. Headline names the three calendars and the one-link outcome; "No account" and "Preview & test" up top set expectations precisely. No jargon, nothing ambiguous.
+2. VALUE: Yes. Today I'd subscribe to a campaign-launch feed, a dbt-run schedule feed, and personal separately and eyeball conflicts — or hack a Sheets/Looker export. This gives one subscribable feed with per-source kept/removed counts I can audit, which my current approach can't show. The reconciliation is what wins me: I can prove no event was silently dropped.
+3. ADVOCACY: 9/10. I'd bring this up unprompted to other analysts BECAUSE the count reconciliation and honest 404 status respect data hygiene — the one thing most calendar-merge tools fail. Not a 10 only because the sample loads URLs without auto-rendering the merge (extra click before the payoff), and the feed URL transits the server (disclosed and acceptable, but it's why it's not pure client-side). Prior blockers — pre-create test, visible fetch status, populated demo — all addressed.

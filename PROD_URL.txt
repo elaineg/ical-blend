@@ -1,0 +1,33 @@
+https://ical-blend.vercel.app
+
+Deployed: 2026-06-18
+Commit: 19f960a9baa647ca191e55d2bc3cba85b2565130
+Feature: per-feed keyword filters (include/exclude, comma=OR, AND-composed with global; Options & filters disclosure relabel; active-filter badge; subscribe-link trust caption; create spinner)
+Vercel deployment ID: dpl_2EX7x75qPR3D3fB4EpZrdKtfwkft
+Alias confirmed: ical-blend.vercel.app → dpl_2EX7x75qPR3D3fB4EpZrdKtfwkft (git-integration auto-aliased on push of 19f960a)
+
+Smoke evidence:
+
+(a) GET https://ical-blend.vercel.app/ → 200
+    Asserted in JS chunk 3n0e8p6fkohld.js:
+    - "Options & filters" (disclosure relabel present in served bundle)
+    - "Your private subscribe link" (subscribe caption present in served bundle)
+    - "excludeKeywords" / "includeKeywords" field data-testids present
+
+(b) POST /api/token with two sources (second feed: exclude "christmas, new year") → 200
+    Token returned: Jq5LkSR...IPs3k
+    totalEventCount: 405, feedsLabelled: 1
+
+(c) GET /api/feed/<token from b> → 200
+    BEGIN:VCALENDAR present
+    Christmas in CA feed: 0 (excluded as expected)
+    New Year in CA feed: 0 (excluded as expected)
+    US prefixed events: 126 (present, unfiltered)
+    Sample CA events present: Victoria Day, Labour Day, Canada Day, Heritage Day
+
+(d) POST /api/token with legacy string[] sources {"sources":["https://www.officeholidays.com/ics-all/usa"]} → 200
+    Token returned, totalEventCount: 126
+    GET /api/feed/<legacy token> → 200
+    BEGIN:VCALENDAR present
+    Real titles served: "New Year's Day", "State Holiday (Government Holiday)", "Day after New Year's Day"
+    No regression on back-compat path.

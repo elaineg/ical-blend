@@ -11,10 +11,14 @@ placeholder second field, so a cold visitor sees the shape of the result before 
 "Create feed" is the single prominent button.
 
 ## 3. Emotional tone
-Calm, trustworthy, technical-but-friendly — this handles people's private schedules. Neutral
-sans-serif (system UI / Inter), cool neutral grays with one confident accent for actions,
-generous spacing (roomy form rows, no cramped controls). It should feel like a quiet utility
-that did exactly what you asked.
+Calm, trustworthy, exacting — this handles people's private schedules, so it must read as a
+precise instrument. Conform to the house SSENSE system (`lib/design-system/ssense.md`):
+monochrome ink/paper/grey only, one neutral grotesque (Helvetica Neue → Archivo/Inter),
+hierarchy from size/weight/case/tracking — NOT color. Tiny UPPERCASE tracked micro-labels
+(STATUS, PREVIEW, KEPT), 1px hairline rules instead of cards/shadows, square corners,
+generous whitespace. The only functional color is `--red` (text only) for fetch failures and
+form errors; success is an ink ✓, never green. It should feel like a quiet, austere utility
+that did exactly what you asked and showed its work.
 
 ## 4. Design decisions (addresses round-1 friction A, D, E, F)
 - **Copy confirms inline (A).** Every copy control (feed URL and webcal:// URL) swaps to
@@ -84,6 +88,72 @@ that did exactly what you asked.
   option objects from before this feature that LACK the new keyword fields must merge
   byte-for-byte identically (empty/absent keyword fields = no filter).
 
+## 4c. Preview & test your feeds (THIS iteration — promote preview to PRE-create + enrich)
+The existing post-create preview is PROMOTED to run while the user is still configuring, and
+ENRICHED with per-source status + a reconciliation count. There is ONE preview, one merge
+model — do not build a second parallel preview.
+
+- **"Preview merged calendar" action — always available while configuring.** A full-width
+  secondary (outline, square, uppercase 11px tracked) button directly below the form controls
+  and ABOVE the "Create feed" button. It is operable BEFORE any subscribe URL exists. Tap
+  target ≥44px tall; renders and works at 375px in build #1 (added-feature-buried). Clicking
+  it fetches all source feeds live via the SAME server endpoint/merge pipeline the served feed
+  uses — pass the current config to a preview route that calls the identical
+  fetch→merge→filter→mask code path and returns {perSource:[{label,ok,count,reason}], fetched,
+  kept, events:[…15]}. The preview MUST be byte-faithful (sibling-symmetry / trust-is-fake-if-
+  forked): a builder must NOT reimplement filtering/masking for the preview.
+- **The preview panel (renders below the button, vertical stack, mobile-first).** Three zones,
+  each separated by a 1px `--grey-200` hairline, in this order:
+  1. **PER-SOURCE STATUS list** — micro-label heading "STATUS". One row per source, stacked
+     full-width (never a wide table that overflows 375px). Each row: source label/prefix (or
+     the URL host if unlabelled) on the left; on the right a status token:
+     - ✓ alive: ink ✓ + "N events" in `--grey-600`.
+     - ✗ failed: `--red` ✗ + a human reason (text only, no fill) — map causes to plain
+       language: timeout → "timed out", 404/4xx → "feed not found (404)", 401/403/auth →
+       "needs a login — not a public feed", non-ICS body → "not a calendar feed", parsed-but-
+       zero → "empty feed (0 events)". Reason must be visible inline at 375px, NO hover.
+  2. **RECONCILIATION COUNT** — a prominent single line, larger weight (h3/16px), reading
+     "Fetched X events → kept Y after filters & mask". X = sum of per-source ✓ counts; Y =
+     rendered merged/deduped kept count. This is the trust core — make it the most legible
+     thing in the panel. If Y < X, optionally append a quiet `--grey-600` note "(N removed by
+     filters/mask)". HONEST INSTRUMENT: the numbers come from the real merge result, never an
+     estimate.
+  3. **PREVIEW list** — micro-label heading "PREVIEW · NEXT 15". The next ~10–15 upcoming
+     events chronologically; each row: date/time (left, tabular-nums, `--grey-600`), then
+     title showing its feed prefix prepended, masked feeds rendered as "Busy", and a small
+     source label. All-day-hidden, per-feed/global keyword-excluded events are ABSENT (they
+     went through the real pipeline). Rows are hairline-separated, left-aligned.
+- **Explicit empty / partial / all-failed states (design them — a lying count is worse than
+  none):**
+  - **0 sources entered:** the "Preview merged calendar" button is disabled (grey-400 per
+    SSENSE disabled spec) with helper "Add a feed URL to preview." No panel, no fake zero.
+  - **All sources failed:** show the STATUS list with every row ✗ + reason, replace the
+    reconciliation line with "No feeds could be fetched — check the URLs above," and show NO
+    preview list (not an empty box implying 0 real events).
+  - **Filters drop everything to 0 kept:** STATUS shows ✓ counts, reconciliation reads
+    "Fetched X events → kept 0 after filters & mask," and in place of the preview list show
+    "0 kept — your filters removed every event. Loosen a keyword or mask above." (say what to
+    do next).
+  - **Partial (some ✓, some ✗):** all rows shown with their real status; reconciliation X
+    counts only the ✓ sources; a quiet line "1 source failed — its events are not included."
+- **"Load a sample feed" — cold-start on-ramp (Elena's gap).** A tertiary/text button
+  ("Load a sample feed", uppercase label, ink underline on hover) near the top of the builder,
+  visible on a cold/empty page. One click populates the config with a WORKING example so a
+  visitor sees a populated merge + preview before pasting private links. SAMPLE CONFIG to
+  specify to the builder: source 1 = a public US Holidays ICS
+  (`https://www.gov.uk/bank-holidays/england-and-wales.ics` or an equivalent stable public
+  holidays ICS the builder verifies returns 200), labelled prefix "[Holidays] "; source 2 = a
+  second stable public ICS (e.g. a public sports/phases-of-the-moon ICS) labelled "[Personal] "
+  with the global busy mask OFF — chosen so the preview clearly shows two distinct labelled
+  sources merging chronologically. After loading, the user can immediately hit "Preview merged
+  calendar" and see ✓ ✓ status, a real reconciliation count, and a populated event list.
+  (Builder MUST confirm both sample URLs return 200 ICS at build time; if one is unreliable,
+  swap for another public ICS — never ship a sample that previews as ✗.)
+- **Re-shown after Create.** After "Create feed", the SAME preview panel (status +
+  reconciliation + events) remains/reappears under the result so the post-create confirmation
+  story (4-craft notes, result-screen order) is unchanged — it is the same component, not a
+  second one.
+
 ## 5. Craft notes (Aisha — product designer)
 - **Empty state:** the pre-filled example IS the empty state — never a blank box. The preview
   area shows "Your merged events will appear here" with the example's upcoming events once built.
@@ -98,7 +168,11 @@ that did exactly what you asked.
 
 ## 6. 5-second check (above the fold)
 - **Headline:** the problem statement above.
-- **Subtitle:** "Paste 2–5 calendar links. Get one feed. No account."
-- **Primary action:** the source-URL fields (first pre-focused) + "Create feed" button.
-- **Pre-filled example:** field 1 holds a real public ICS URL so the user can hit "Create feed"
-  immediately and see a working merged result.
+- **Subtitle:** "Paste 2–5 calendar links. Preview & test them, then get one feed. No account."
+- **Primary action:** the source-URL fields (first pre-focused) + "Preview merged calendar"
+  (test first) above "Create feed". A cold visitor reads "test your feeds before you subscribe"
+  immediately.
+- **Pre-filled example / on-ramp:** field 1 holds a real public ICS URL, and a visible
+  "Load a sample feed" button populates a full two-source example so a cold visitor can hit
+  "Preview merged calendar" and see ✓ status + a reconciliation count + a populated event list
+  before pasting anything private.

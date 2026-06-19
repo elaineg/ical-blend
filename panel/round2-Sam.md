@@ -1,48 +1,46 @@
-# Round 2 — Sam (Product Manager, mobile-heavy)
+# Sam — Round 2 (re-test)
 
-Tested cold at 375px, then drove the flow: 2-3 work feeds (Google team, Asana milestones,
-Outlook), per-feed filters, global filter, Create feed, inspected the subscribe link.
+Tested cold at 375px, my between-meetings phone reality. I was a 9 in round 1.
 
-## (b) Purpose clear in 5 seconds? YES
-"One feed from all your calendars — work, personal, or team" + "Paste 2-5 calendar links.
-Get one subscribable feed. No account." nailed it instantly. I knew exactly what this was
-and that it's for someone like me merging Asana + work + personal. The "No account" was the
-trust hook I look for.
+## Re-check of MY round-1 concerns
+- "Scrolled past the form before trusting Preview existed" → FIXED in practice: at 375px,
+  "LOAD A SAMPLE FEED" sits directly under the headline, ABOVE the source inputs. No scroll
+  needed to find proof it works.
+- "Couldn't confirm Copy actually grabbed the URL" → CONFIRMED FIXED: clicked Copy, label
+  flipped "Copy" → "Copied!", and the clipboard genuinely held the feed URL. Last round that
+  was blocked in my env; this round it round-tripped. That was the half-point holding me back.
+- "Wanted to watch the link land in Google Calendar" → still can't drive Google's own UI from
+  here, but webcal:// + "Add to Google Calendar" + the feed URL all generate correctly.
+Prior concerns addressed: all (the two testable in-env).
 
-## Per-feed keyword filters + active-filter badge found COLD? YES
-The "Options & filters · prefix · keyword filter · mask" micro-hint under each feed row told
-me filters lived there before I even clicked. Opened it, found "Keywords — this feed only"
-with Include/Exclude and the helpful note "These ADD to the global keyword filters above — an
-event must pass both." After typing "release"/"lunch" and collapsing, the row showed a
-highlighted "Options & filters · on" pill PLUS a chip reading "include: release · exclude:
-lunch". That badge is exactly the kind of at-a-glance state I want — I didn't have to re-open
-to remember what I'd set. The global "Only include / Exclude events containing" fields are
-right there below, also obvious.
+## Feature focus — the 3 things I was asked to confirm
+1. ONE-CLICK SAMPLE → POPULATED PREVIEW: YES. One tap on "Load a sample feed" dropped in two
+   real URLs (gov.uk holidays + Chelsea fixtures) AND auto-ran the preview — no second click.
+   Per-source status, count line, and the 15-event list all appeared from a single tap. It
+   just worked, zero debugging. This is the "I need this" moment.
+2. RECONCILIATION COUNT + SPACING: "Fetched 408 events → kept 408 after filters & mask" reads
+   correctly — spacing around the arrow and "filters & mask" is clean. ONE cosmetic nit: the
+   per-source lines render "[Holidays]— 83 events fetched" with the em-dash flush against the
+   bracket (no space). Only sloppy pixel on screen; not a blocker.
+3. MOBILE 375px / SHAREABLE LINK OBVIOUS: YES. Clean single column, good tap targets, no
+   horizontal scroll, 0 console errors across the whole flow. The "Your merged feed" block
+   gives a prominent feed URL + Copy, "Add to Google Calendar", and Subscribe-in
+   Google/Apple/Outlook — the link to share is unmistakable.
 
-## (c) Valuable? YES
-Today I keep 3 calendars in separate tabs and manually eyeball overlaps; there's no clean way
-to give a teammate "my whole world" in one link. This does the exact job — one subscribable
-URL, per-feed labels so a merged event reads "[Work] Launch review", a Busy-only privacy mask,
-and copy-paste subscribe steps for Google/Apple/Outlook. The "Preview — exactly what
-subscribers see" panel is the detail that earns my trust before I share. It even degraded
-gracefully when 2 of my placeholder feeds failed (clear "HTTP 404 / source rejected" rows,
-feed still built from the rest) — that's the "just works" I won't debug for.
-
-## (a) Advocate to a peer? 8/10
-Genuinely strong. What holds it back from a 9:
-1. **The link is NOT a "clean shareable link."** The Feed URL is a ~180-char opaque token. I
-   share in Slack and Notion and that monster looks alarming, not organized — the opposite of
-   my whole motivation. A short/branded link or a nicer "share card" would push this to a 9-10.
-2. **Privacy caption gives me pause as a PM:** "your config (including source URLs) is
-   encrypted into this link... but they do transit the server" + "treat it like a password."
-   For a client release calendar that's a real "wait, is this safe to share?" moment. Honest,
-   which I respect, but it adds friction to the exact share I'd do most.
-3. Copy button worked visually (label is just "Copy"); clipboard read blocked in test env, not
-   counted against the app.
-
-Nothing here is a debug-it problem — it just worked. I'd bring it up the next time a PM
-complains about juggling calendars.
+## Answers
+1. GUT (first 30s): It just works, and yes I'd share the link.
+2. TOP BLOCKER: None that stops me. Two small frictions for a PM who lives in Slack/Notion:
+   (a) the feed URL is a ~180-char opaque token — pasting that monster into a channel looks
+   alarming, not organized, which is literally my motivation; a short/branded link would seal
+   a 10. (b) "treat it like a password" + "source URLs transit the server" is honest but gives
+   me a beat of pause before sharing a client calendar. Neither is a debug-it problem.
+3. Clarity 10, Value 9, Advocacy 9. Holding at 9, not bumping to 10: the Copy fix removed my
+   last in-env doubt, but the ugly long share URL is the one thing I'd actually grumble about
+   to the teammate I hand it to — and "looks organized" is the whole job for me. Still a
+   genuine unprompted recommend.
 
 ```json
-{"tester": 1, "round": 2, "clarity": "Yes", "value": "Yes", "advocacy": 8, "topComplaints": ["Feed URL is a ~180-char opaque token — not a clean link I'd happily paste into Slack/Notion", "Privacy caption ('URLs transit the server', 'treat it like a password') makes me hesitate to share a client calendar"], "priorConcernsAddressed": "n/a"}
+{"tester": 8, "round": 2, "clarity": "Yes", "value": "Yes", "advocacy": 9, "topComplaints": ["feed URL is a ~180-char opaque token — not a clean link I'd happily paste into Slack/Notion", "per-source status '[Holidays]— 83 events fetched' missing a space before the em-dash (cosmetic)"], "priorConcernsAddressed": "all"}
 ```
+
+Sam — adv:9 clarity:10 value:9 — top blocker: the ~180-char opaque feed URL looks alarming to paste into Slack/Notion (a short/branded link would make it a 10).

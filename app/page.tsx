@@ -6,6 +6,7 @@ interface PreviewEvent {
   summary: string;
   start: string | null;
   allDay: boolean;
+  sourceLabel?: string | null;
 }
 
 interface CreateResult {
@@ -22,6 +23,26 @@ interface CreateResult {
     feedsLabelled?: number;
     feedsMasked?: number;
   };
+}
+
+/** Per-source fetch result returned by /api/preview */
+interface SourceFetchResult {
+  index: number;
+  label: string;
+  ok: boolean;
+  count: number;
+  reason: string;
+}
+
+/** Full preview panel data returned by /api/preview */
+interface PreviewData {
+  perSource: SourceFetchResult[];
+  fetched: number;
+  kept: number;
+  events: PreviewEvent[];
+  allFailed: boolean;
+  failedCount: number;
+  sourceCount: number;
 }
 
 const RECENT_BLENDS_KEY = "ical-blend:recent-v1";
@@ -160,6 +181,185 @@ function isValidCalendarUrl(raw: string): { ok: true } | { ok: false; message: s
   return { ok: true };
 }
 
+// Demo sample config — two confirmed-live public ICS feeds (verified curl 200 + ICS).
+// Source 1: UK Bank Holidays (gov.uk) — stable, official, text/calendar
+// Source 2: Chelsea FC fixtures (fixtur.es) — stable, public sports calendar
+const SAMPLE_SOURCES = [
+  "https://www.gov.uk/bank-holidays/england-and-wales.ics",
+  "https://ics.fixtur.es/v2/home/chelsea.ics",
+];
+const SAMPLE_OPTIONS: FeedOptions[] = [
+  { ...defaultFeedOptions(), prefix: "[Holidays] " },
+  { ...defaultFeedOptions(), prefix: "[Personal] " },
+];
+
+/** Build the sources payload for API calls (same shape for /api/token and /api/preview). */
+function buildSourcesPayload(
+  sources: string[],
+  feedOptions: FeedOptions[]
+): Record<string, unknown>[] {
+  const filledIndices: number[] = [];
+  sources.forEach((s, i) => {
+    if (s.trim().length > 0) filledIndices.push(i);
+  });
+  return filledIndices.map((i) => {
+    const opts = feedOptions[i];
+    const src: Record<string, unknown> = { url: sources[i].trim() };
+    if (opts.prefix.trimStart().trim()) src.prefix = opts.prefix.trimStart();
+    if (opts.busyOnly) src.busyOnly = true;
+    if (opts.hideAllDay) src.hideAllDay = true;
+    if (opts.include.trim()) src.include = opts.include.trim();
+    if (opts.exclude.trim()) src.exclude = opts.exclude.trim();
+    return src;
+  });
+}
+
+/** Preview panel component — shared between pre-create and post-create views. */
+function PreviewPanel({
+  data,
+  loading,
+}: {
+  data: PreviewData | null;
+  loading: boolean;
+}) {
+  if (loading) {
+    return (
+      <div
+        data-testid="preview-panel"
+        role="status"
+        aria-label="Loading preview"
+        className="mt-4 border-t border-gray-200 pt-4 text-sm text-gray-500"
+      >
+        Fetching your feeds…
+      </div>
+    );
+  }
+  if (!data) return null;
+
+  const { perSource, fetched, kept, events, allFailed, failedCount } = data;
+  const partialFail = failedCount > 0 && !allFailed;
+
+  return (
+    <div data-testid="preview-panel" className="mt-4 space-y-0">
+      {/* ── Zone 1: Per-source STATUS ── */}
+      <div className="border-t border-gray-200 pt-4">
+        <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2">
+          Status
+        </p>
+        <ul className="space-y-1.5" data-testid="preview-source-status">
+          {perSource.map((src) => (
+            <li
+              key={src.index}
+              data-testid={`preview-source-${src.index}`}
+              className="flex items-start gap-2 text-sm"
+            >
+              <span className="shrink-0 w-4 text-center leading-5">
+                {src.ok ? (
+                  <span aria-label="alive" className="text-gray-800 font-semibold">✓</span>
+                ) : (
+                  <span aria-label="failed" className="text-red-600 font-semibold">✗</span>
+                )}
+              </span>
+              <span className="min-w-0 flex-1 leading-5">
+                <span className="font-medium text-gray-800 break-all">{src.label}</span>
+                {src.ok ? (
+                  <span className="ml-1 text-gray-500">— {src.count} event{src.count !== 1 ? "s" : ""} fetched</span>
+                ) : (
+                  <span className="ml-1 text-red-600">— {src.reason}</span>
+                )}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* ── Zone 2: RECONCILIATION COUNT ── */}
+      <div className="border-t border-gray-200 pt-4 mt-4">
+        {allFailed ? (
+          <p
+            role="alert"
+            data-testid="preview-all-failed"
+            className="text-sm font-semibold text-red-600"
+          >
+            No feeds could be fetched — check the URLs above.
+          </p>
+        ) : (
+          <>
+            <p
+              data-testid="preview-reconciliation"
+              className="text-base font-semibold text-gray-900"
+            >
+              {"Fetched "}{fetched}{" event"}{fetched !== 1 ? "s" : ""}{" → kept "}{kept}{" after filters & mask"}
+            </p>
+            {fetched > kept && kept > 0 && (
+              <p className="text-xs text-gray-500 mt-0.5">
+                ({fetched - kept} removed by filters/mask)
+              </p>
+            )}
+            {partialFail && (
+              <p
+                role="status"
+                data-testid="preview-partial-fail"
+                className="text-xs text-amber-700 mt-1"
+              >
+                {failedCount} source{failedCount !== 1 ? "s" : ""} failed — {failedCount !== 1 ? "their" : "its"} events are not included.
+              </p>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* ── Zone 3: PREVIEW list ── */}
+      {!allFailed && (
+        <div className="border-t border-gray-200 pt-4 mt-4">
+          <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2">
+            Preview · Next 15
+          </p>
+          {kept === 0 ? (
+            <p
+              role="status"
+              data-testid="preview-zero-kept"
+              className="text-sm text-gray-500"
+            >
+              0 kept — your filters removed every event. Loosen a keyword or mask above.
+            </p>
+          ) : events.length === 0 ? (
+            <p
+              role="status"
+              data-testid="preview-no-upcoming"
+              className="text-sm text-gray-500"
+            >
+              No upcoming events in the next few months. Check your source feeds.
+            </p>
+          ) : (
+            <ul
+              data-testid="preview-list"
+              className="divide-y divide-gray-100"
+            >
+              {events.map((ev, i) => (
+                <li
+                  key={i}
+                  className="flex flex-col gap-0.5 py-2 text-sm sm:flex-row sm:items-baseline sm:gap-3"
+                >
+                  <span className="shrink-0 tabular-nums text-xs text-gray-500 sm:w-32">
+                    {formatStart(ev)}
+                  </span>
+                  <span className="min-w-0 flex-1 font-medium text-gray-900 break-words">
+                    {ev.summary}
+                  </span>
+                  {ev.sourceLabel && (
+                    <span className="shrink-0 text-xs text-gray-400">{ev.sourceLabel}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Home() {
   const [sources, setSources] = useState<string[]>(["", ""]);
   const [feedOptions, setFeedOptions] = useState<FeedOptions[]>([
@@ -188,7 +388,17 @@ export default function Home() {
   const [recentCopied, setRecentCopied] = useState<number | null>(null);
   const recentCopyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Preview state — pre-create and post-create share this panel.
+  const [previewData, setPreviewData] = useState<PreviewData | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+
   const webcalUrl = feedUrl ? feedUrl.replace(/^https?:\/\//, "webcal://") : null;
+
+  /** Returns true if there is at least one non-empty source URL. */
+  function hasAnySources(): boolean {
+    return sources.some((s) => s.trim().length > 0);
+  }
 
   function setSource(i: number, value: string) {
     setSources((prev) => prev.map((s, j) => (j === i ? value : s)));
@@ -218,6 +428,26 @@ export default function Home() {
     setFieldErrors((prev) => prev.filter((e) => e.index !== i));
   }
 
+  /** Load the sample/demo config into the form, then immediately auto-run the preview. */
+  function loadSample() {
+    const sampleSources = SAMPLE_SOURCES.slice();
+    const sampleOptions = SAMPLE_OPTIONS.map((o) => ({ ...o }));
+    // Expand to 2 rows if needed.
+    setSources(sampleSources);
+    setFeedOptions(sampleOptions);
+    setOptionsOpen([false, false]);
+    setFieldErrors([]);
+    setError(null);
+    // Clear any existing feed URL and preview so the user starts fresh.
+    setFeedUrl(null);
+    setResult(null);
+    setPreviewData(null);
+    setPreviewError(null);
+    // Auto-run the preview immediately — pass sample values directly so we don't
+    // depend on React state having flushed (state updates are async).
+    runPreview({ sources: sampleSources, feedOptions: sampleOptions, include: "", exclude: "", busyOnly: false });
+  }
+
   async function copy(text: string, which: "https" | "webcal") {
     try {
       await navigator.clipboard.writeText(text);
@@ -226,6 +456,51 @@ export default function Home() {
       copyTimer.current = setTimeout(() => setCopied(null), 2000);
     } catch {
       // Clipboard unavailable; the URL is selectable text anyway.
+    }
+  }
+
+  /** Run the preview — calls /api/preview with the current config.
+   *  Accepts optional overrides so loadSample can pass values before React
+   *  state has flushed (React state updates are async). */
+  async function runPreview(overrides?: {
+    sources?: string[];
+    feedOptions?: FeedOptions[];
+    include?: string;
+    exclude?: string;
+    busyOnly?: boolean;
+  }) {
+    setPreviewError(null);
+    setPreviewData(null);
+    setPreviewLoading(true);
+
+    const effectiveSources = overrides?.sources ?? sources;
+    const effectiveFeedOptions = overrides?.feedOptions ?? feedOptions;
+    const effectiveInclude = overrides?.include ?? include;
+    const effectiveExclude = overrides?.exclude ?? exclude;
+    const effectiveBusyOnly = overrides?.busyOnly ?? busyOnly;
+
+    const sourcesPayload = buildSourcesPayload(effectiveSources, effectiveFeedOptions);
+    try {
+      const res = await fetch("/api/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sources: sourcesPayload,
+          include: effectiveInclude,
+          exclude: effectiveExclude,
+          busyOnly: effectiveBusyOnly,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setPreviewError(data.error ?? "Could not run preview.");
+        return;
+      }
+      setPreviewData(data as PreviewData);
+    } catch {
+      setPreviewError("Network error — please try again.");
+    } finally {
+      setPreviewLoading(false);
     }
   }
 
@@ -257,18 +532,7 @@ export default function Home() {
       return;
     }
 
-    // Build per-source objects for the API (only include filled rows).
-    const sourcesPayload = filledIndices.map((i) => {
-      const opts = feedOptions[i];
-      const src: Record<string, unknown> = { url: sources[i].trim() };
-      // Send the prefix with trailing space intact; validateConfig will strip only leading whitespace.
-      if (opts.prefix.trimStart().trim()) src.prefix = opts.prefix.trimStart();
-      if (opts.busyOnly) src.busyOnly = true;
-      if (opts.hideAllDay) src.hideAllDay = true;
-      if (opts.include.trim()) src.include = opts.include.trim();
-      if (opts.exclude.trim()) src.exclude = opts.exclude.trim();
-      return src;
-    });
+    const sourcesPayload = buildSourcesPayload(sources, feedOptions);
 
     setWorking(true);
     try {
@@ -303,6 +567,26 @@ export default function Home() {
         },
       };
       setResult(newResult);
+      // After Create, show the preview panel populated from the token response
+      // (re-uses the same PreviewPanel component — post-create confirmation story).
+      const postCreatePreview: PreviewData = {
+        perSource: (data.previewEvents ?? []).length > 0
+          ? sourcesPayload.map((src, i) => ({
+              index: i,
+              label: (src.prefix as string | undefined) ?? (() => { try { return new URL(src.url as string).hostname; } catch { return String(src.url).slice(0, 40); } })(),
+              ok: !(data.failedSources ?? []).includes(i + 1),
+              count: 0, // unknown at create-time without per-source counts
+              reason: data.failedReasons?.[i + 1] ?? "",
+            }))
+          : [],
+        fetched: data.totalEventCount ?? 0,
+        kept: data.totalEventCount ?? 0,
+        events: data.previewEvents ?? [],
+        allFailed: (data.failedSources ?? []).length === sourcesPayload.length,
+        failedCount: (data.failedSources ?? []).length,
+        sourceCount: sourcesPayload.length,
+      };
+      setPreviewData(postCreatePreview);
       // Save to device-local recent blends (SSR-safe: only runs client-side).
       const newBlend: RecentBlend = {
         url,
@@ -319,25 +603,35 @@ export default function Home() {
   }
 
   const inputClass =
-    "w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500";
+    "w-full border border-gray-300 px-3 py-2 text-sm focus:border-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-700";
   const inputErrorClass =
-    "w-full rounded-md border border-red-400 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500";
+    "w-full border border-red-400 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500";
+
+  const previewCanRun = hasAnySources() && !working;
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-10">
-      <h1 className="text-3xl font-bold tracking-tight">
-        One feed from all your calendars — work, personal, or team
+      <h1 className="text-2xl font-bold tracking-tight">
+        Stop checking three calendars: blend your work, personal, and shared calendars into one
+        link you subscribe to once — and hand others a version with the private titles hidden.
       </h1>
       <p className="mt-2 text-sm text-gray-600">
-        Paste 2–5 calendar links. Get one subscribable feed. No account.{" "}
-        Whether you&rsquo;re merging work, personal, and family calendars, or
-        combining client projects, webinar schedules, and launch timelines for
-        your whole team — paste the ICS/webcal links and walk away with a
-        single live feed. Hide private titles from shared versions with one
-        checkbox.
+        Paste 2–5 calendar links. Preview &amp; test them, then get one feed. No account.
       </p>
 
-      <form onSubmit={createFeed} className="mt-8 space-y-6">
+      {/* Load a sample feed — cold-start on-ramp */}
+      <div className="mt-4">
+        <button
+          type="button"
+          data-testid="load-sample"
+          onClick={loadSample}
+          className="text-xs font-semibold uppercase tracking-widest underline text-gray-500 hover:text-gray-800"
+        >
+          Load a sample feed
+        </button>
+      </div>
+
+      <form onSubmit={createFeed} className="mt-6 space-y-6">
         <fieldset className="space-y-3">
           <legend className="text-sm font-semibold">
             Source feeds (ICS / webcal URLs)
@@ -367,7 +661,7 @@ export default function Home() {
                       type="button"
                       aria-label={`Remove source ${i + 1}`}
                       onClick={() => removeSource(i)}
-                      className="rounded-md border border-gray-300 px-3 text-sm text-gray-500 hover:bg-gray-50"
+                      className="border border-gray-300 px-3 text-sm text-gray-500 hover:bg-gray-50"
                     >
                       &times;
                     </button>
@@ -391,9 +685,9 @@ export default function Home() {
                     data-testid={`options-toggle-${i}`}
                     aria-expanded={open}
                     onClick={() => toggleOptions(i)}
-                    className={`flex items-center gap-1.5 rounded px-2 py-0.5 text-xs font-medium transition-colors ${
+                    className={`flex items-center gap-1.5 px-2 py-1 text-xs font-medium transition-colors ${
                       active
-                        ? "bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200 hover:bg-indigo-100"
+                        ? "bg-gray-100 text-gray-800 ring-1 ring-gray-300 hover:bg-gray-200"
                         : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
                     }`}
                   >
@@ -419,7 +713,7 @@ export default function Home() {
                   {!open && active && (
                     <span
                       data-testid={`options-active-badge-${i}`}
-                      className="ml-1 inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700"
+                      className="ml-1 inline-flex items-center bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700"
                     >
                       {[
                         opts.include.trim() && `include: ${opts.include.trim().split(",")[0].trim()}`,
@@ -437,7 +731,7 @@ export default function Home() {
                   {open && (
                     <div
                       data-testid={`options-panel-${i}`}
-                      className="mt-2 space-y-3 rounded-md border border-gray-100 bg-gray-50 p-3 text-sm"
+                      className="mt-2 space-y-3 border border-gray-100 bg-gray-50 p-3 text-sm"
                     >
                       {/* Title prefix */}
                       <label className="block">
@@ -452,7 +746,7 @@ export default function Home() {
                           onChange={(e) => setFeedOpt(i, "prefix", e.target.value)}
                           data-testid={`source-prefix-${i}`}
                           aria-label={`Title prefix for source ${i + 1}`}
-                          className="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          className="mt-1 w-full border border-gray-300 px-2 py-1.5 text-xs focus:border-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-700"
                         />
                       </label>
 
@@ -464,7 +758,7 @@ export default function Home() {
                           onChange={(e) => setFeedOpt(i, "busyOnly", e.target.checked)}
                           data-testid={`source-busy-${i}`}
                           aria-label={`Mask this feed's titles for source ${i + 1}`}
-                          className="mt-0.5 h-3.5 w-3.5 rounded border-gray-300"
+                          className="mt-0.5 h-3.5 w-3.5 border-gray-300"
                         />
                         <span className="text-xs">
                           <span className="font-semibold">Mask this feed&apos;s titles</span>
@@ -482,7 +776,7 @@ export default function Home() {
                           onChange={(e) => setFeedOpt(i, "hideAllDay", e.target.checked)}
                           data-testid={`source-hide-allday-${i}`}
                           aria-label={`Hide all-day events for source ${i + 1}`}
-                          className="mt-0.5 h-3.5 w-3.5 rounded border-gray-300"
+                          className="mt-0.5 h-3.5 w-3.5 border-gray-300"
                         />
                         <span className="text-xs">
                           <span className="font-semibold">Hide all-day events from this feed</span>
@@ -507,7 +801,7 @@ export default function Home() {
                               onChange={(e) => setFeedOpt(i, "include", e.target.value)}
                               data-testid={`source-include-${i}`}
                               aria-label={`Per-feed include keyword for source ${i + 1}`}
-                              className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                              className="mt-0.5 w-full border border-gray-300 px-2 py-1.5 text-xs focus:border-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-700"
                             />
                           </label>
                           <label className="flex-1">
@@ -519,7 +813,7 @@ export default function Home() {
                               onChange={(e) => setFeedOpt(i, "exclude", e.target.value)}
                               data-testid={`source-exclude-${i}`}
                               aria-label={`Per-feed exclude keyword for source ${i + 1}`}
-                              className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                              className="mt-0.5 w-full border border-gray-300 px-2 py-1.5 text-xs focus:border-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-700"
                             />
                           </label>
                         </div>
@@ -539,7 +833,7 @@ export default function Home() {
               type="button"
               data-testid="add-source"
               onClick={addSource}
-              className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
+              className="text-sm font-medium text-gray-600 hover:text-gray-900 underline"
             >
               + Add another source
             </button>
@@ -584,7 +878,7 @@ export default function Home() {
             checked={busyOnly}
             onChange={(e) => setBusyOnly(e.target.checked)}
             data-testid="busy-only"
-            className="mt-0.5 h-4 w-4 rounded border-gray-300"
+            className="mt-0.5 h-4 w-4 border-gray-300"
           />
           <span>
             <span className="font-semibold">Busy-only privacy mask</span>
@@ -598,12 +892,48 @@ export default function Home() {
           </span>
         </label>
 
+        {/* ── Preview merged calendar — primary pre-create action ── */}
+        <div className="space-y-2">
+          {!hasAnySources() && (
+            <p
+              role="status"
+              data-testid="preview-disabled-hint"
+              className="text-xs text-gray-400"
+            >
+              Add a feed URL to preview.
+            </p>
+          )}
+          <button
+            type="button"
+            data-testid="preview-btn"
+            disabled={!previewCanRun}
+            aria-busy={previewLoading}
+            onClick={() => runPreview()}
+            className="w-full border border-gray-400 px-4 py-3 text-xs font-semibold uppercase tracking-widest text-gray-700 hover:bg-gray-50 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-default"
+            style={{ minHeight: "44px" }}
+          >
+            {previewLoading ? "Fetching…" : "Preview merged calendar"}
+          </button>
+
+          {previewError && (
+            <p role="alert" data-testid="preview-error" className="text-sm text-red-600">
+              {previewError}
+            </p>
+          )}
+
+          {/* Preview panel — shown after Preview click (pre-create) and after Create */}
+          {(previewData || previewLoading) && !feedUrl && (
+            <PreviewPanel data={previewData} loading={previewLoading} />
+          )}
+        </div>
+
+        {/* ── Create feed — secondary action ── */}
         <button
           type="submit"
           disabled={working}
           data-testid="create-feed"
           aria-busy={working}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60 sm:w-auto"
+          className="inline-flex w-full items-center justify-center gap-2 border border-gray-800 bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-gray-700 disabled:opacity-60 sm:w-auto"
         >
           {working && (
             <svg
@@ -646,7 +976,7 @@ export default function Home() {
           <div
             role="status"
             data-testid="confirmation-banner"
-            className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800"
+            className="border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700"
           >
             {result.applied.sourceCount === 1 ? (
               <span>
@@ -661,7 +991,7 @@ export default function Home() {
                 {result.totalEventCount !== 1 ? "s" : ""} from{" "}
                 <strong>{result.applied.sourceCount - result.failedSources.length}</strong>{" "}
                 source{result.applied.sourceCount - result.failedSources.length !== 1 ? "s" : ""} at blend time.{" "}
-                <span className="text-green-600 font-normal">The live feed auto-refreshes.</span>
+                <span className="text-gray-500 font-normal">The live feed auto-refreshes.</span>
               </span>
             )}
             {result.applied.include && (
@@ -690,7 +1020,7 @@ export default function Home() {
             <div
               role="alert"
               data-testid="create-failures"
-              className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
+              className="border border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-700"
             >
               <p className="font-semibold mb-1">
                 {result.failedSources.length === 1 ? "1 source" : `${result.failedSources.length} sources`} could not be fetched
@@ -705,7 +1035,7 @@ export default function Home() {
                   );
                 })}
               </ul>
-              <p className="mt-1 text-amber-700">
+              <p className="mt-1 text-gray-500">
                 Events from the remaining sources are included. The feed will retry on each refresh.
               </p>
             </div>
@@ -717,7 +1047,7 @@ export default function Home() {
             target="_blank"
             rel="noopener noreferrer"
             data-testid="add-to-google"
-            className="flex w-full items-center justify-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 sm:w-auto"
+            className="flex w-full items-center justify-center gap-2 border border-gray-800 bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-gray-700 sm:w-auto"
           >
             Add to Google Calendar
           </a>
@@ -726,7 +1056,7 @@ export default function Home() {
           <p className="text-xs text-gray-500" data-testid="subscribe-caption">
             Your private subscribe link — paste it into Google Calendar, Apple Calendar, or Outlook to subscribe. Anyone with this link can read your merged calendar; treat it like a password.
           </p>
-          <div className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <div className="space-y-3 border border-gray-200 bg-gray-50 p-4">
             {(
               [
                 { label: "Feed URL (https://)", url: feedUrl, which: "https" as const, testid: "feed-url" },
@@ -738,7 +1068,7 @@ export default function Home() {
                 <div className="mt-1 flex items-center gap-2">
                   <code
                     data-testid={testid}
-                    className="block flex-1 overflow-x-auto whitespace-nowrap rounded bg-white px-2 py-1.5 text-xs text-gray-800 ring-1 ring-gray-200"
+                    className="block flex-1 overflow-x-auto whitespace-nowrap bg-white px-2 py-1.5 text-xs text-gray-800 ring-1 ring-gray-200"
                   >
                     {url}
                   </code>
@@ -747,13 +1077,13 @@ export default function Home() {
                     data-testid={`copy-${which}`}
                     aria-label={`Copy ${label}`}
                     onClick={() => copy(url, which)}
-                    className="shrink-0 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium hover:bg-gray-100"
+                    className="shrink-0 border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium hover:bg-gray-100"
                   >
                     {copied === which ? "Copied!" : "Copy"}
                   </button>
                 </div>
                 {copied === which && (
-                  <p role="status" className="mt-0.5 text-xs text-green-600">
+                  <p role="status" className="mt-0.5 text-xs text-gray-600">
                     Copied to clipboard
                   </p>
                 )}
@@ -768,7 +1098,7 @@ export default function Home() {
           </div>
 
           {/* Subscribe instructions */}
-          <div className="rounded-lg border border-gray-200 p-4 text-sm text-gray-700">
+          <div className="border border-gray-200 p-4 text-sm text-gray-700">
             <h3 className="font-semibold">Subscribe in your calendar app</h3>
             <ul className="mt-2 list-disc space-y-2 pl-5">
               <li>
@@ -788,8 +1118,8 @@ export default function Home() {
             </ul>
           </div>
 
-          {/* Event preview */}
-          <div className="rounded-lg border border-gray-200 p-4">
+          {/* Post-create event preview — same PreviewPanel component */}
+          <div className="border border-gray-200 p-4">
             <h3 className="text-sm font-semibold">
               Preview — exactly what subscribers see
             </h3>
@@ -837,7 +1167,7 @@ export default function Home() {
           <p className="mt-0.5 text-xs text-gray-400">
             Saved on this device only. Edit the nickname to remember which link is which.
           </p>
-          <ul className="mt-3 divide-y divide-gray-100 rounded-lg border border-gray-200">
+          <ul className="mt-3 divide-y divide-gray-100 border border-gray-200">
             {recentBlends.map((blend, idx) => {
               const defaultLabel = (() => {
                 try { return `Blend from ${new URL(blend.url).hostname}`; } catch { return `Blend ${idx + 1}`; }
@@ -863,7 +1193,7 @@ export default function Home() {
                           prev.map((b, j) => (j === idx ? { ...b, nickname: nn } : b))
                         );
                       }}
-                      className="w-full rounded border border-gray-200 px-2 py-1 text-sm font-semibold text-gray-700 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+                      className="w-full border border-gray-200 px-2 py-1 text-sm font-semibold text-gray-700 focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300"
                     />
                     {/* URL as secondary, faint */}
                     <div className="mt-0.5 truncate text-xs text-gray-400" data-testid={`recent-url-${idx}`}>{blend.url}</div>
@@ -883,12 +1213,12 @@ export default function Home() {
                           // Clipboard unavailable.
                         }
                       }}
-                      className="rounded border border-gray-200 bg-white px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50"
+                      className="border border-gray-200 bg-white px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50"
                     >
                       Copy URL
                     </button>
                     {recentCopied === idx && (
-                      <p role="status" data-testid={`recent-copied-${idx}`} className="text-xs text-green-600">
+                      <p role="status" data-testid={`recent-copied-${idx}`} className="text-xs text-gray-600">
                         Copied!
                       </p>
                     )}

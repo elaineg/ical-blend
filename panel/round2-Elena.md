@@ -1,57 +1,47 @@
-# Round 2 — Elena (Engineering manager, 8 reports, 30-sec patience, phone-first)
+# iCal Blend — Round 2 — Elena (Eng Manager, 8 reports, 30-sec patience, phone-first)
 
-Tested cold on a 375px mobile viewport (my real device between meetings).
+Tested cold on a 375px mobile viewport (my real device between meetings). Zero console errors.
 
-## (b) Purpose clear within 5 seconds? YES
-The H1 "One feed from all your calendars — work, personal, or team" plus the subhead
-"Paste 2–5 calendar links. Get one subscribable feed. No account." told me exactly what it
-does and that there's no setup tax. "No account" is the line that kept me from bouncing —
-anything requiring a login is dead to me. I'd tell a peer: "paste your on-call, recruiting,
-and personal .ics links, get ONE link you subscribe to in Google Calendar."
+## Round-1 concern re-checked FIRST
+My round-1 top complaint (adv 8) was: "No sample/demo feed to see a real populated merge before
+pasting my private links." That is now DIRECTLY FIXED. priorConcernsAddressed: all.
+- I tapped "LOAD A SAMPLE FEED" ONCE on my phone and the preview populated instantly: two
+  sources with ✓ status ([Holidays] 83 fetched, [Personal] 325 fetched), a reconciliation
+  count, and 15 real merged events with dates and [source] prefixes. No second press, no setup.
+  This is exactly the instant-value-within-30s behavior that was missing.
 
-## (c) Valuable to you? YES
-Today I manually add 3 separate calendars to Google Calendar and they clutter my phone with
-3 toggles and 3 colors. I literally want my team on-call feed + recruiting feed + personal
-merged into ONE subscription. This does exactly that, client-side, no signup. The
-"Busy-only privacy mask" and per-feed keyword filters mean I can share a recruiting feed
-without leaking interview candidate names — that's a real win I didn't know I wanted.
+## 1. Gut reaction (first 30s) — value IS instant
+Headline "Stop checking three calendars: blend your work, personal, and shared calendars into
+one link" reads in one glance. Then the sample button does the selling — one tap and I'm
+looking at a populated, real merged feed. As a manager who wants on-call + recruiting + personal
+in one phone subscription, this is the "I need this" moment, and it happened inside my budget.
 
-## Per-feed keyword filters AND active-filter badge found COLD? YES
-- Each feed row has an "Options & filters" disclosure with a greyed micro-hint
-  "prefix · keyword filter · mask" — I knew filters lived there before clicking.
-- Expanded: "Keywords — this feed only" with Include ("piano, soccer") / Exclude fields,
-  plus a per-feed label prefix and Mask toggle. Unmistakable.
-- After I set include=oncall + prefix, COLLAPSING the row showed a purple active-filter
-  badge: "Options & filters · on" and "include: oncall · prefix" right under the URL. I can
-  see at a glance which feeds are filtered without re-opening every row. Excellent.
-- Global filter present too: "Only include events containing" / "Exclude events containing"
-  with copy that points back to per-feed options. Clear division of scope.
+## 2. Specifically confirmed this round
+1. **One-click populated preview** — CONFIRMED. Single tap → per-source ✓ status + count +
+   15 events. No second click required.
+2. **Reconciliation count spacing** — CONFIRMED clean: "Fetched 408 events → kept 408 after
+   filters & mask". Proper spaces around the arrow and the "&"; nothing mashed together.
+3. **Mobile 375px** — CONFIRMED. Layout stacks cleanly, full-width tappable buttons, readable
+   event list and status block. I'd genuinely use this on my phone between meetings.
 
-## Flow speed
-Pasted 2 URLs → Create feed → got a subscribe link in well under 30 seconds. Result panel
-nails it: "Add to Google Calendar" button (one tap from my phone), a Copy button (verified:
-label flips to "Copied!", URL is on the clipboard — copy verified visually, clipboard read
-worked in test env), per-platform Google/Apple/Outlook steps, a "Preview — exactly what
-subscribers see" block, and a security caption ("treat it like a password"). It also honestly
-reported "2 sources could not be fetched — HTTP 404" for my placeholder URLs instead of
-silently shipping an empty feed. Trust earned.
+## 3. Biggest remaining blocker
+Not a dealbreaker, but real: the sample applies NO filter/mask, so "Fetched 408 → kept 408"
+is a visible no-op. The privacy/filtering is HALF my reason to use this (busy-only on a shared
+recruiting feed). If the sample pre-demoed a filter or the busy mask so the count visibly
+dropped (e.g. "kept 312"), that one click would also SELL the feature that makes me comfortable
+sharing a team feed. Secondary nit: sample data is football/holidays — a work-flavored sample
+would land harder for the manager use case.
 
-## What holds it back (the missing point)
-- My placeholder URLs 404'd as expected, but I never saw it work with REAL events end to
-  end on first try — a "Try a sample feed" / demo link would let a skeptical manager see a
-  populated merge in 10 seconds before pasting her own private links.
-- "Add to Google Calendar" is what I'd actually tap on mobile — it should be the loud
-  primary; the raw Feed URL + Copy is secondary for me. Layout mostly does this already.
-- Minor: I had to trust that the link stays live ("auto-refreshes on each refresh") — one
-  line on how long the link lasts / what happens if the source rotates would seal it.
-
-## (a) Advocacy: 8/10
-I'd bring this up unprompted in my staff channel — it solves a real, recurring,
-phone-friendly pain with zero setup and no signup, and the privacy mask makes it safe to
-share team feeds. Not a 9 only because I haven't seen a real populated merge first-run
-(a sample feed would close that), and I'd want a word on link longevity before I tell 8
-reports to depend on it.
+## Scores
+- Clarity: 9 — headline + one-click sample make purpose obvious in seconds.
+- Value: 9 — one phone subscription replacing 3 calendar toggles, with a privacy mask for shared
+  feeds, is something I'd set up for my team; the sample removes the setup-fear that kills tools for me.
+- Advocacy: 9 — I'd bring this up unprompted in my staff channel ("free, no-signup, blend your
+  calendars into one link"). Not a 10 only because the one-click sample doesn't yet SHOW the
+  filter/busy-mask changing the count — once it does, it's a 10.
 
 ```json
-{"tester": 2, "round": 2, "clarity": "Yes", "value": "Yes", "advocacy": 8, "topComplaints": ["No sample/demo feed to see a real populated merge before pasting private links", "Need one line on how long the subscribe link stays live / source rotation"], "priorConcernsAddressed": "n/a"}
+{"tester": 1, "round": 2, "clarity": "Yes", "value": "Yes", "advocacy": 9, "topComplaints": ["Sample shows 'Fetched 408 → kept 408' (no-op) so the filter/busy-mask isn't demonstrated in the one click — the privacy feature that sells it stays invisible", "Sample data is football/holidays, not work-flavored for the manager use case"], "priorConcernsAddressed": "all"}
 ```
+
+Elena — adv:9 clarity:9 value:9 — top blocker: the one-click sample's "Fetched 408 → kept 408" is a no-op, so the preview never demonstrates the filter/busy-mask actually changing the count (the privacy feature I'd subscribe for).

@@ -1,52 +1,48 @@
-# ical-blend — Round 1 — Marcus (frontend eng, 2yr, desktop Chrome + devtools)
+# Marcus — Round 1
+- Advocacy: 9/10
+- Clarity: Yes
+- Value: Yes
+- Found-preview-cold: Yes
+- Top blocker: none (one cosmetic CSS bug: missing space in "kept 375after filters & mask")
 
-**Advocacy: 8/10** · Clarity: Yes · Value: Yes
+## Walkthrough
+Cold load: headline "blend your work, personal, and shared calendars into one link you subscribe
+to once" + "Paste 2–5 calendar links. Preview & test them, then get one feed. No account." — I knew
+the job in ~5s. "LOAD A SAMPLE FEED" is the first action and "PREVIEW MERGED CALENDAR" sits above
+the fold, so I found the preview flow cold without hunting.
 
-## (b) Clarity — Yes
-Cold, in ~5s I got it from the h1 "One feed from all your calendars — work, personal, or
-team" + sub "Paste 2–5 calendar links. Get one subscribable feed. No account." Two URL
-inputs labeled "Source feeds (ICS / webcal URLs)" and a blue "Create feed" button made the
-whole flow obvious without scrolling. The "No account / never stored persistently" line is
-exactly the no-signup hook I'd repeat in Slack.
+Load-a-sample: populated two real ICS URLs (gov.uk bank holidays + a Chelsea fixtures feed) with
+prefixes on. Minor gap vs the "instant populated merge" promise — it fills the fields but does NOT
+auto-run the merge; I still had to click Preview. Not a blocker, but one extra click.
 
-## (c) Value — Yes
-Today I manually subscribe my GitHub milestone .ics + personal Google Cal + a meetup feed
-separately in Google Calendar, and there's no way to drop the noisy all-day junk. This
-gives me ONE webcal:// link, server-side auto-refresh, and — the thing that made me sit up
-— a per-feed **"Hide all-day events from this feed"** checkbox. That's my exact pain point
-("drop noisy all-day events"), per-feed, not global. Real test: blended two live public
-holiday feeds → 76 events, valid `BEGIN:VCALENDAR`, HTTP 200, "Add to Google Calendar"
-button + webcal link. This genuinely beats my current manual setup.
+Preview (sample): per-source status "✓ [Holidays] — 83 events fetched", "✓ [Personal] — 325 events
+fetched", reconciliation "Fetched 408 events → kept 408 after filters & mask", and a chronological
+NEXT 15 list with source tags. Counts reconcile — I trust it.
 
-## Per-feed keyword fields — could I find them cold?
-**Partially.** The fields are inside a per-feed **"Options"** toggle that's COLLAPSED by
-default. I'd never have guessed there were per-feed keyword filters without clicking it —
-but two things saved it: (1) the global filter helptext explicitly says *"Want different
-keywords per feed? Use that feed's Options"*, which is a great breadcrumb, and (2) once
-expanded the panel is excellent: Label, Mask, Hide all-day, and **"Keywords — this feed
-only"** Include/Exclude with the note *"These ADD to the global keyword filters above — an
-event must pass both."* That AND-composition is spelled out perfectly. So: discoverable via
-the breadcrumb, not via the disclosure itself.
+Bad feed: dead domain in source 1, real feed in source 2 → "✗ ...example — fetch failed" + "✓
+www.gov.uk — 83 events fetched" + "Fetched 83 → kept 83" + "1 source failed — its events are not
+included." HONEST partial failure, exactly right. This is the screenshot I'd post in Slack.
 
-## Both filters work (verified)
-- Global include "Day" → result said *"Only events matching 'Day'"* and feed regenerated.
-- Per-feed exclude "Day" on feed-1 only → event count dropped **76 → 48**, proving the
-  exclude is real and scoped to that one feed. 0 console errors throughout.
+Filter+mask: exclude "bank holiday" dropped 408→375 (math checks). Busy mask turned titles into
+"[Personal] Busy". Create feed gave https Feed URL + webcal:// URL + Add-to-Google button + per-app
+instructions + a "treat it like a password" warning. Copy → "Copied!", clipboard held the URL.
+curl'd the feed endpoint: valid VCALENDAR ICS, and with mask on the UID was "busy-…" with titles
+stripped — the mask applies to the SERVED feed, not just the preview. That's the real test passing.
 
-## What holds it back from a 9–10 (brutal)
-1. **"Options" is a styled `<span>` inside a `<button>`, not a native `<details>`** — small
-   pill, low contrast, easy to scan right past. The whole per-feed power (my killer all-day
-   filter!) is buried behind a forgettable toggle. Promote at least the all-day toggle or
-   add a hint like "Options · filters, labels, all-day".
-2. **Slow "Creating…" with no progress/feedback** — server fetches the real feeds, took
-   ~5–10s+ on a 76-event blend with the button just reading "Creating…". For a tool I'd
-   demo live in Slack, I want a spinner or "fetching 2 feeds…" so it doesn't feel hung.
-3. Minor: the generated Feed URL is one giant opaque encrypted blob; fine functionally,
-   but I'd want a "Copy" confirmation toast (couldn't fully verify clipboard in test env).
+No console errors, no pageerrors, no layout jank beyond the one missing space.
 
-Solid, no jank in the CSS, no errors. I'd share it — but the buried Options is the one
-thing keeping it off a confident 9.
+## Answers
+1. CLARITY: Yes. Hero sentence + "No account" + a visible Preview button told me what it does and
+   who it's for instantly. Nothing confused me.
+2. VALUE: Yes. This is literally my use case — merge a GitHub sprint ICS + personal Google Cal + a
+   meetup feed, exclude-filter the noise, one webcal link. Today I subscribe to three feeds manually
+   in Google Calendar with no way to drop all-day junk. This does it free, no signup, with honest
+   per-source status and a working privacy mask. I'd use it weekly as sprints rotate.
+3. ADVOCACY: 9/10, found-preview-cold YES. I'd drop it in team Slack today. Off a 10 only because
+   (a) "Load sample" doesn't auto-preview as the copy implies (one dangling click), and (b) the
+   "kept 375after" missing-space bug — tiny, but I notice string/CSS jank instantly and it dents the
+   "this is polished" pitch by a hair.
 
 ```json
-{"tester": 1, "round": 1, "clarity": "Yes", "value": "Yes", "advocacy": 8, "topComplaints": ["Per-feed Options (incl. my key all-day filter + per-feed keywords) collapsed behind a low-contrast span-button toggle — only found it via the global helptext breadcrumb", "Create feed shows 'Creating…' for several seconds with no spinner/progress on live multi-feed fetch"], "priorConcernsAddressed": "n/a"}
+{"tester": 1, "round": 1, "clarity": "Yes", "value": "Yes", "advocacy": 9, "topComplaints": ["'Load a sample feed' fills the URL fields but does not auto-run the merge — copy implies an instant populated merge, but I still had to click Preview", "Cosmetic: reconciliation reads 'kept 375after filters & mask' — missing space between count and 'after'"], "priorConcernsAddressed": "n/a"}
 ```
