@@ -1,55 +1,57 @@
-# Aisha — Product designer (Figma/FigJam/Notion/Loom/Maze) — Round 1
+# ical-blend — Round 1 — Aisha (Product designer, judges craft hard)
 
-I judge craft hard: spacing, copy tone, empty states. A clumsy flow loses me regardless of utility.
+Device: desktop 1280px, trackpad. Used cold, no source read.
 
-## Clarity — YES
-I'd tell a friend: "Paste 2–5 calendar links, get back ONE link you subscribe to — so you stop
-flipping between three calendars." The H1 "Stop checking three calendars" plus the subhead
-"Paste 2–5 calendar links. Get one feed. No account." nailed it in well under 30s. The
-"No account" / "Nothing is stored on the server" lines did the trust work without me asking.
-Tone is plain and confident, not cutesy. Good.
+## (b) Clarity within 5s — YES
+H1 "One feed from all your calendars — work, personal, or team" + subhead naming the exact
+job (paste 2–5 links, get one subscribable feed, no account, merge work/personal/family).
+That subhead literally describes MY use case (personal + partner + kids' school ICS). The
+"No account" line lands the wedge immediately. Nothing confused me above the fold.
 
-## Value — YES
-Today I do this manually: I keep my personal Google Calendar, my partner's shared cal, and the
-kids'-school ICS as three separate subscriptions in Apple Calendar and just eyeball all three.
-There's no merge — and certainly no way to relabel or hide one feed's titles. This collapses it
-to one URL AND lets me prefix the school feed "[School]" while masking the partner feed to "Busy."
-That second part is genuinely something my current setup can't do at all. Real, recurring, saves effort.
+## (c) Value — YES
+Today I hand-import three ICS feeds separately into Apple Calendar and they never stay in
+sync; re-subscribing is manual. This gives me ONE auto-refreshing webcal link. I ran a real
+merge with two public US-holiday ICS feeds: 28 events from 2 sources, got a feed URL +
+webcal:// + an "Add to Google Calendar" button + a "what subscribers see" preview. That
+preview is the trust-builder — I can see exactly what lands before I subscribe. Genuinely
+saves me real recurring effort.
 
-## Craft notes (the part I care about)
-- Per-feed **Options** disclosure: I found it instantly on cold load — every row carries its own
-  "Options" affordance, default collapsed, with the disclosure triangle. Reads CONSIDERED, not
-  bolted-on. Expanded, it's a tinted card with proper grouping: "Label added to this feed's event
-  titles" (placeholder `[Work]`), "Mask this feed's titles", "Hide all-day events from this feed",
-  each with a real helper line. Spacing and hierarchy are clean.
-- Per-feed mask vs global mask: clearly DISTINCT. Per-feed helper says "Show this feed's events as
-  'Busy', keeping OTHER feeds detailed"; the global "Busy-only privacy mask" even cross-references
-  it — "Applies to all feeds. Need it for just one? Use a feed's Options." That sentence is the
-  kind of considered copy I advocate for. Nice.
-- Flow worked end to end: `[School]` prefix landed on the US-holiday events, the Canada feed
-  rendered as "Busy" in the live preview. Summary is honest: "Merged 59 events from 2 sources.
-  1 feed labelled. 1 feed masked." Two URL variants (https + webcal), per-app subscribe steps.
-- Copy cue: FIRES. Button flips "Copy"→"Copied!" AND a green "Copied to clipboard" line appears.
-  Clipboard genuinely held the feed URL (verified, not blocked). Zero console errors anywhere.
+## Per-feed keyword fields — FOUND THEM COLD? Mostly yes.
+The fields live inside a collapsed per-feed "Options" disclosure. I would NOT have guessed
+keyword filtering hides under a feed's "Options" on my own — BUT the global keyword section
+has a quiet helper line "Want different keywords per feed? Use that feed's Options." That
+signpost is exactly the considered touch I reward; it pointed me straight in. Expanded the
+disclosure: clean panel — Label, Mask titles, Hide all-day, then "Keywords — this feed only"
+with Include/Exclude (placeholders piano, soccer / standup, lunch) and the line "These ADD
+to the global keyword filters above — an event must pass both." Composition explained in
+plain words, no jargon.
 
-## Nits keeping it off a 9
-- Masked feeds collapse to bare "Busy" with no per-feed tag, so in the preview I see several
-  identical "Busy" rows (e.g. two on Sep 7) and can't tell WHICH masked feed they came from.
-  A masked feed should still accept/keep its prefix so I get "[Partner] Busy". Right now masking
-  silently overrides the label.
-- The label field is titled "Label added to this feed's event titles" but the global mask copy and
-  the summary call the same thing "labelled" — fine — yet the placeholder `[Work]` with a trailing
-  space is a hidden detail; I didn't know whether to add my own trailing space. A hint ("we add the
-  space for you") would remove the guess.
-- Long feed URL is visually truncated in the field with no "this is long, just copy it" reassurance
-  — minor, the Copy button covers it.
+## Both filters, end-to-end — WORK CORRECTLY
+Per-feed include "christmas" on feed 1 + global exclude "labor". Result: feed 2 kept all
+holidays, feed 1 narrowed to only Christmas, Labor Day dropped everywhere, and the result
+header honestly states "excluding 'labor'". The AND-compose behaved exactly as the copy
+promised. 0 console errors through the whole flow.
 
-(a) Advocacy: **8/10** — I'd recommend it to my parents'-group chat and design friends unprompted.
-Held back from 9 only by the masked-feed-loses-its-label gap, which matters for MY exact use case.
-(b) Value clear in <30s: **YES**
-(c) Biggest blocker: masking a feed silently discards its prefix/label, so multiple masked feeds
-become indistinguishable "Busy" rows — I lose the ability to tell partner-vs-school apart.
+## Craft critique (I grade this hard)
++ Copy tone is consistent, human, and honest (the encryption/"URLs transit the server"
+  disclosure is refreshingly candid — most tools would hide that).
++ Disclosure hierarchy is sensible; helper microcopy under each global field is the kind of
+  considerate signposting that loses most tools points and earns this one.
++ Recent-blends history with editable nicknames = thoughtful return-flow.
+- Minor: the per-feed filter is discoverable ONLY via the global helper line — if that line
+  were missing, the feature is buried. It's a one-link-deep secret. I'd want a tiny inline
+  hint on the Options summary itself (e.g. "Options · filters, labels").
+- Minor: feed/webcal URLs are giant opaque blobs shown raw; visually heavy. A truncated
+  pill with the Copy button would read cleaner.
+- Empty state of an expanded Options is fine but slightly dense (5 controls stacked); could
+  group "Privacy" vs "Filters" with subtle dividers.
+
+## (a) Advocacy — 8/10
+I'd bring this up unprompted to a peer wrestling with multi-calendar sync — it nails the
+job, the copy is considered, and both filter layers actually work. Held back from 9 by: the
+per-feed filters being one-helper-line away from invisible, and the raw URL blobs reading
+clumsy. Polish those and it's a 9.
 
 ```json
-{"tester": 2, "round": 1, "clarity": "Yes", "value": "Yes", "advocacy": 8, "topComplaints": ["Masking a feed discards its prefix, so multiple masked feeds show as identical untagged 'Busy' rows", "[Work] placeholder's trailing space is a hidden guess — no hint about whether the app adds the separator"], "priorConcernsAddressed": "n/a"}
+{"tester": 1, "round": 1, "clarity": "Yes", "value": "Yes", "advocacy": 8, "topComplaints": ["per-feed keyword filters are discoverable only via one global helper line — buried inside a collapsed Options disclosure", "raw giant feed/webcal URL blobs read visually clumsy; want truncated pill + copy"], "priorConcernsAddressed": "n/a"}
 ```

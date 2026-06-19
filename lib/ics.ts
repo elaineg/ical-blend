@@ -134,10 +134,28 @@ export function parseCalendar(text: string): ParsedCalendar {
   return { events, timezones };
 }
 
-/** Does the event's SUMMARY contain the keyword (case-insensitive)? */
-export function summaryMatches(eventLines: string[], keyword: string): boolean {
-  const summary = getProp(eventLines, "SUMMARY") ?? "";
-  return unescapeText(summary).toLowerCase().includes(keyword.toLowerCase());
+/**
+ * Does the event's SUMMARY match the filter string (case-insensitive)?
+ *
+ * The filter string may contain comma-separated terms. A match is returned if
+ * the SUMMARY contains ANY of the terms (OR semantics). Commas let users write
+ * filters like "standup, lunch" to match either word.
+ *
+ * Back-compat guarantees:
+ * - A single comma-less term (the common case) behaves identically to before:
+ *   one trim→one substring check.
+ * - An empty string, all-whitespace, or all-commas string produces zero terms
+ *   and returns false (callers guard with `if (filter && ...)`, so no filter =
+ *   match-all / drop-none is preserved at the call site).
+ */
+export function summaryMatches(eventLines: string[], filter: string): boolean {
+  const terms = filter
+    .split(",")
+    .map((t) => t.trim())
+    .filter((t) => t.length > 0);
+  if (terms.length === 0) return false;
+  const summary = unescapeText(getProp(eventLines, "SUMMARY") ?? "").toLowerCase();
+  return terms.some((t) => summary.includes(t.toLowerCase()));
 }
 
 const BUSY_STRIP = new Set([
@@ -220,6 +238,18 @@ export interface PerFeedOptions {
   busyOnly?: boolean;
   /** Drop all-day VEVENTs (DATE-valued DTSTART) from this feed. */
   hideAllDay?: boolean;
+  /**
+   * Per-feed include keyword: only events whose SUMMARY contains this string
+   * (case-insensitive) are kept from this feed. Empty/absent = match-all.
+   * Same semantics as the global include field.
+   */
+  include?: string;
+  /**
+   * Per-feed exclude keyword: events whose SUMMARY contains this string
+   * (case-insensitive) are dropped from this feed. Empty/absent = drop-none.
+   * Same semantics as the global exclude field.
+   */
+  exclude?: string;
 }
 
 export interface MergeInput {
@@ -331,6 +361,12 @@ export function mergeCalendars(input: MergeInput): string {
       // Per-feed: drop all-day events from this feed if hideAllDay is set.
       if (feedOpts.hideAllDay && isAllDayEvent(ev)) continue;
 
+      // Per-feed keyword filters (applied before global filters; compose with AND).
+      // Empty/absent = no filter (match-all for include, drop-none for exclude).
+      if (feedOpts.include && !summaryMatches(ev, feedOpts.include)) continue;
+      if (feedOpts.exclude && summaryMatches(ev, feedOpts.exclude)) continue;
+
+      // Global keyword filters.
       if (options.include && !summaryMatches(ev, options.include)) continue;
       if (options.exclude && summaryMatches(ev, options.exclude)) continue;
 

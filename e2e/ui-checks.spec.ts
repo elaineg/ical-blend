@@ -10,11 +10,12 @@ test("first feed URL input is empty by default (no prefilled dummy URL)", async 
   await expect(firstInput).toHaveValue("");
 });
 
-test("Options disclosure trigger is present and visible on the first feed row", async ({ page }) => {
+test("Options & filters disclosure trigger is present and visible on the first feed row", async ({ page }) => {
   await page.goto("/", { waitUntil: "networkidle" });
-  // The button with text "Options" should be visible on the first feed row.
-  const optionsBtn = page.getByText("Options").first();
+  // The button with text "Options & filters" should be visible on the first feed row.
+  const optionsBtn = page.getByTestId("options-toggle-0");
   await expect(optionsBtn).toBeVisible();
+  await expect(optionsBtn).toContainText("Options & filters");
 });
 
 test("privacy/trust note renders near generated URL after feed creation", async ({ page }) => {

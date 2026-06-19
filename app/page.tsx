@@ -82,14 +82,22 @@ interface FeedOptions {
   prefix: string;
   busyOnly: boolean;
   hideAllDay: boolean;
+  include: string;
+  exclude: string;
 }
 
 function defaultFeedOptions(): FeedOptions {
-  return { prefix: "", busyOnly: false, hideAllDay: false };
+  return { prefix: "", busyOnly: false, hideAllDay: false, include: "", exclude: "" };
 }
 
 function feedOptionsActive(opts: FeedOptions): boolean {
-  return opts.prefix.trim().length > 0 || opts.busyOnly || opts.hideAllDay;
+  return (
+    opts.prefix.trim().length > 0 ||
+    opts.busyOnly ||
+    opts.hideAllDay ||
+    opts.include.trim().length > 0 ||
+    opts.exclude.trim().length > 0
+  );
 }
 
 function formatStart(ev: PreviewEvent): string {
@@ -257,6 +265,8 @@ export default function Home() {
       if (opts.prefix.trimStart().trim()) src.prefix = opts.prefix.trimStart();
       if (opts.busyOnly) src.busyOnly = true;
       if (opts.hideAllDay) src.hideAllDay = true;
+      if (opts.include.trim()) src.include = opts.include.trim();
+      if (opts.exclude.trim()) src.exclude = opts.exclude.trim();
       return src;
     });
 
@@ -395,11 +405,34 @@ export default function Home() {
                       ▸
                     </span>
                     {active ? (
-                      <span>Options · on</span>
+                      <span>Options &amp; filters · on</span>
                     ) : (
-                      <span>Options</span>
+                      <span>
+                        Options &amp; filters
+                        {!open && (
+                          <span className="ml-1.5 text-gray-400 font-normal">prefix · keyword filter · mask</span>
+                        )}
+                      </span>
                     )}
                   </button>
+                  {/* Inline filter badge when collapsed + active */}
+                  {!open && active && (
+                    <span
+                      data-testid={`options-active-badge-${i}`}
+                      className="ml-1 inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700"
+                    >
+                      {[
+                        opts.include.trim() && `include: ${opts.include.trim().split(",")[0].trim()}`,
+                        opts.exclude.trim() && `exclude: ${opts.exclude.trim().split(",")[0].trim()}`,
+                        opts.prefix.trim() && `prefix`,
+                        opts.busyOnly && `mask`,
+                        opts.hideAllDay && `hide all-day`,
+                      ]
+                        .filter(Boolean)
+                        .slice(0, 2)
+                        .join(" · ") || "options set"}
+                    </span>
+                  )}
 
                   {open && (
                     <div
@@ -458,6 +491,43 @@ export default function Home() {
                           </span>
                         </span>
                       </label>
+
+                      {/* Per-feed keyword filters */}
+                      <div>
+                        <span className="text-xs font-semibold text-gray-600">
+                          Keywords — this feed only
+                        </span>
+                        <div className="mt-1 flex flex-col gap-2 sm:flex-row">
+                          <label className="flex-1">
+                            <span className="text-xs text-gray-500">Include</span>
+                            <input
+                              type="text"
+                              placeholder="piano, soccer"
+                              value={opts.include}
+                              onChange={(e) => setFeedOpt(i, "include", e.target.value)}
+                              data-testid={`source-include-${i}`}
+                              aria-label={`Per-feed include keyword for source ${i + 1}`}
+                              className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            />
+                          </label>
+                          <label className="flex-1">
+                            <span className="text-xs text-gray-500">Exclude</span>
+                            <input
+                              type="text"
+                              placeholder="standup, lunch"
+                              value={opts.exclude}
+                              onChange={(e) => setFeedOpt(i, "exclude", e.target.value)}
+                              data-testid={`source-exclude-${i}`}
+                              aria-label={`Per-feed exclude keyword for source ${i + 1}`}
+                              className="mt-0.5 w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            />
+                          </label>
+                        </div>
+                        <p className="mt-1 text-xs text-gray-400">
+                          Only this feed&apos;s events are filtered. These ADD to the global
+                          keyword filters above — an event must pass both.
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -502,7 +572,10 @@ export default function Home() {
         </div>
         <p className="-mt-4 text-xs text-gray-500">
           Keywords match event titles, case-insensitively. Leave blank to keep
-          everything.
+          everything.{" "}
+          <span className="text-gray-400">
+            Applies to all feeds. Want different keywords per feed? Use that feed&apos;s Options &amp; filters.
+          </span>
         </p>
 
         <label className="flex items-start gap-3 text-sm">
@@ -520,7 +593,7 @@ export default function Home() {
               locations and attendees are stripped. Times are kept.
             </span>
             <span className="block text-gray-400 text-xs mt-0.5">
-              Applies to all feeds. Need it for just one? Use a feed&apos;s Options.
+              Applies to all feeds. Need it for just one? Use a feed&apos;s Options &amp; filters.
             </span>
           </span>
         </label>
@@ -529,8 +602,32 @@ export default function Home() {
           type="submit"
           disabled={working}
           data-testid="create-feed"
-          className="w-full rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 sm:w-auto"
+          aria-busy={working}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60 sm:w-auto"
         >
+          {working && (
+            <svg
+              className="h-4 w-4 animate-spin"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+              />
+            </svg>
+          )}
           {working ? "Creating…" : "Create feed"}
         </button>
 
@@ -626,6 +723,9 @@ export default function Home() {
           </a>
 
           {/* Copy URLs */}
+          <p className="text-xs text-gray-500" data-testid="subscribe-caption">
+            Your private subscribe link — paste it into Google Calendar, Apple Calendar, or Outlook to subscribe. Anyone with this link can read your merged calendar; treat it like a password.
+          </p>
           <div className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
             {(
               [

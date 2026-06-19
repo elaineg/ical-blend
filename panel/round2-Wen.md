@@ -1,37 +1,54 @@
-# Round 2 — Wen (marketing data analyst; data-hygiene obsessive)
+# Round 2 — Wen (Marketing data analyst)
 
-(a) Advocacy: **2/10**
-(b) Value clear in <30s: **yes** — headline + subhead + "private titles hidden" land fast.
-(c) Biggest remaining blocker: **MY R1 P0 IS NOT FIXED. The merge still silently collapses
-distinct events when masking is involved, AND the collapse now destroys an UNMASKED feed's
-real titles.**
+**Advocacy: 8/10 · Clarity: Yes · Value: Yes**
+Found per-feed keyword filters AND active-filter badge cold: **YES**
 
-Prior concern re-check: **NOT addressed.** It changed shape but the defect persists.
+## Cold open (30s)
+H1 "One feed from all your calendars — work, personal, or team" + subhead "Paste 2–5
+calendar links. Get one subscribable feed. No account." told me exactly what it is and
+who it's for in under 5 seconds. I'd tell a peer: "paste your campaign-calendar ICS, your
+dbt-run ICS, and personal, get one webcal link to subscribe — free, no login, with
+per-feed filtering." The form was visible above the fold; nothing made me guess.
 
-Hard evidence (I fetched both sources + the generated ICS and counted):
-- Sources: US Holidays = 27 VEVENTs, Canada = 38 VEVENTs → 65 events in.
-- Merged feed served **59** VEVENTs. **6 events vanished.** UI proudly says "Merged 59
-  events" — a false all-clear that hides the loss.
-- Repro: I labelled US `[Work]` (NOT masked) and masked Canada only. On dates both feeds
-  share the same title (New Year's Day, Good Friday, Easter Sunday — 2025 & 2026 = 6 events),
-  the merged output shows ONE event titled `[Work]Busy` with a synthetic `busy-<hash>` UID.
-- `[Work]New Year's Day`, `[Work]Good Friday`, `[Work]Easter Sunday` appear **ZERO** times in
-  the output. The US feed was never masked, yet its real titles are gone — masked Canada won
-  the collapse and the survivor inherited US's prefix but Canada's "Busy".
-- Root cause is observable: dedup runs AFTER masking and compares the MASKED title. Two
-  genuinely distinct events ("Busy" from US, "Busy" from CA) look identical post-mask and get
-  merged. Proof: on 20251225 US "Christmas" vs CA "Christmas Day" (different titles) BOTH
-  survive; on 20250101 both "New Year's Day" collapse to one.
+## Per-feed filters + badge (the thing I was told to scrutinize)
+- Each source row has a collapsed **"Options & filters · prefix · keyword filter · mask"**
+  micro-hint. Expanding feed 1 gave: prefix label, Mask-this-feed-as-Busy, Hide all-day,
+  and **per-feed Include/Exclude keywords** with the killer clarity line: *"These ADD to the
+  global keyword filters above — an event must pass both."* That AND-semantics note is
+  exactly what stops me distrusting a filter tool.
+- After I set prefix "Campaign" + include "day" and collapsed, the row showed a visible
+  pill **"Options & filters · on"** and a second pill **"include: day · prefix"**. Active
+  state is legible without re-expanding. Found cold, no hunting.
+- Global "Only include / Exclude events containing" present, with hint pointing to per-feed
+  options for different keywords. Clean separation of global vs per-feed.
 
-This is the worst possible failure for me: I came here BECAUSE I distrust invisible
-transforms, and the tool both drops events and overwrites titles I explicitly chose to keep
-visible — then tells me everything merged fine. The R1 fixes I can see (empty first row,
-privacy note, "Your recent blends" recall with nicknames, per-feed Options visibility) are
-genuinely nice, but they're polish on a feed I can't trust to be faithful. A merged calendar
-that loses 6/65 events is worse than my three separate subscriptions. Fix: dedup on stable
-identity (UID/DTSTART+ORIGINAL title) BEFORE masking, never across feeds with different
-prefixes, and never let a masked event collapse an unmasked one.
+## Data fidelity audit (I curled the ACTUAL served .ics, not just the preview)
+This is where most merge tools lose my trust. They didn't:
+- Served feed = **467 VEVENTs; 467 unique UIDs (zero dupes/collisions)** across 2 merged
+  feeds; **467 DTSTART present (no date-stripped events)**.
+- **Every served event matches the "day" include filter** — the preview's 10-item sample
+  and the real .ics are consistent; no invisible "show filtered in UI, ship unfiltered to
+  the calendar app" betrayal.
+- **Per-feed prefix correctly scoped**: 259 events labelled "Campaign" (US feed only), 208
+  unlabelled (UK feed). No cross-feed contamination.
+- Caption is honest about transforms: "467 events from 2 sources at blend time… Only events
+  matching 'day'. 1 feed labelled." Preview header literally says *"exactly what subscribers
+  see — masks, labels, and filters are already applied below — this is the real output."*
+
+## What holds it back from 9–10
+1. **No raw event count BEFORE filtering.** I see "467 at blend time (post-filter)" but not
+   "X fetched → Y kept." As an analyst auditing fidelity, I want the drop count to confirm
+   nothing was silently lost vs. excluded by my own filter. Right now I had to curl + grep
+   to prove zero drops; a "fetched 600, 467 passed your filters" line would earn the 9.
+2. **No per-source fetch status.** If feed 2's URL 404'd, would the merge silently ship only
+   feed 1, or warn me? I couldn't tell from the success path. Marketers hand me dead Luma
+   links weekly; I need a visible "feed 2 failed to fetch" rather than a quiet partial merge.
+3. Opaque encrypted blob URL is fine for privacy, but the "treat it like a password" warning
+   plus "URLs transit the server" is a small enterprise-policy speed bump I'd flag to IT.
+
+Everything I was suspicious of (invisible transforms, dropped events, mislabelled feeds)
+held up under a real curl+grep audit. That's why it's a genuine 8, not a polite 7.
 
 ```json
-{"tester": 1, "round": 2, "clarity": "Yes", "value": "No", "advocacy": 2, "topComplaints": ["Merge silently drops events: 65 source events -> 59 merged, UI claims success", "Masking-after-dedup collapses distinct same-date events and DESTROYS the unmasked feed's real titles ([Work]New Year's Day -> [Work]Busy)"], "priorConcernsAddressed": "none"}
+{"tester": 0, "round": 2, "clarity": "Yes", "value": "Yes", "advocacy": 8, "topComplaints": ["No fetched-vs-kept drop count to prove zero silent event loss", "No per-source fetch-success/failure status — partial merge could ship silently"], "priorConcernsAddressed": "n/a"}
 ```

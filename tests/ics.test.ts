@@ -170,6 +170,102 @@ describe("mergeCalendars", () => {
     expect(out).not.toContain("SUMMARY:Planning");
   });
 
+  it("comma-OR exclude: 'standup, lunch' drops events matching either term", () => {
+    const out = mergeCalendars({
+      calendars: [calA, calB],
+      options: { exclude: "standup, lunch" },
+    });
+    // "Daily Standup" matches "standup" → dropped
+    expect(out).not.toContain("Daily Standup");
+    // "Piano lesson" and "Planning" match neither term → kept
+    expect(out).toContain("SUMMARY:Piano lesson");
+    expect(out).toContain("SUMMARY:Planning");
+  });
+
+  it("comma-OR include: 'piano, planning' keeps events matching either term", () => {
+    const out = mergeCalendars({
+      calendars: [calA, calB],
+      options: { include: "piano, planning" },
+    });
+    expect(out).toContain("SUMMARY:Piano lesson");
+    expect(out).toContain("SUMMARY:Planning");
+    expect(out).not.toContain("SUMMARY:Daily Standup");
+  });
+
+  it("single comma-less keyword is byte-identical behaviour to before (no regression)", () => {
+    // "standup" with no comma → same as the original single-substring check
+    const out = mergeCalendars({
+      calendars: [calA, calB],
+      options: { exclude: "STANDUP" },
+    });
+    expect(out).not.toContain("Daily Standup");
+    expect(out).toContain("SUMMARY:Planning");
+    expect(out).toContain("SUMMARY:Piano lesson");
+  });
+
+  it("empty filter = no filter (match-all for include, drop-none for exclude)", () => {
+    const outExcludeEmpty = mergeCalendars({
+      calendars: [calA, calB],
+      options: { exclude: "" },
+    });
+    // All 3 unique events should survive
+    expect(outExcludeEmpty).toContain("Daily Standup");
+    expect(outExcludeEmpty).toContain("Piano lesson");
+    expect(outExcludeEmpty).toContain("Planning");
+
+    const outIncludeEmpty = mergeCalendars({
+      calendars: [calA, calB],
+      options: { include: "" },
+    });
+    expect(outIncludeEmpty).toContain("Daily Standup");
+    expect(outIncludeEmpty).toContain("Piano lesson");
+    expect(outIncludeEmpty).toContain("Planning");
+  });
+
+  it("whitespace-only or comma-only filter = no filter", () => {
+    const outWhitespace = mergeCalendars({
+      calendars: [calA, calB],
+      options: { exclude: "   " },
+    });
+    expect(outWhitespace).toContain("Daily Standup");
+
+    const outCommas = mergeCalendars({
+      calendars: [calA, calB],
+      options: { exclude: ",,,," },
+    });
+    expect(outCommas).toContain("Daily Standup");
+  });
+
+  it("per-feed comma-OR include works via summaryMatches", () => {
+    const out = mergeCalendars({
+      calendars: [calA, calB],
+      options: {},
+      perFeedOptions: [
+        { include: "standup, planning" }, // feed 0: keep only standup or planning
+        {},                               // feed 1: no filter
+      ],
+    });
+    // From feed 0: Daily Standup and Planning pass; Planning is deduped (shared UID)
+    expect(out).toContain("Daily Standup");
+    // Piano lesson is from feed 1 (unfiltered)
+    expect(out).toContain("Piano lesson");
+  });
+
+  it("per-feed comma-OR exclude works via summaryMatches", () => {
+    const out = mergeCalendars({
+      calendars: [calA, calB],
+      options: {},
+      perFeedOptions: [
+        { exclude: "standup, planning" }, // feed 0: drop standup and planning
+        {},                               // feed 1: no filter
+      ],
+    });
+    // From feed 0: Daily Standup and Planning dropped; "shared@" Planning in feed 1 survives
+    expect(out).not.toContain("Daily Standup");
+    expect(out).toContain("Planning");    // survived via feed 1
+    expect(out).toContain("Piano lesson");
+  });
+
   it("appends a marker event when sources failed", () => {
     const out = mergeCalendars({
       calendars: [calA],

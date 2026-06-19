@@ -1,58 +1,52 @@
-# Sam — Product Manager (mobile-heavy, won't debug anything)
+# Round 1 — Sam (PM, mobile-heavy, medium tech, won't debug)
 
-Tested cold on a 375px mobile viewport, then completed the full flow.
+Cold open on phone (375px). Task: merge two real holiday .ics feeds into one subscribable
+link, try per-feed keyword filters AND global keyword filters.
 
-## Clarity — Yes
-I'd tell a friend: "Paste 2–5 calendar links, it mashes them into ONE link you subscribe to
-once — and you can hand someone a version with private titles hidden." The headline "Stop
-checking three calendars" plus the subhead ("Blend your work, personal, and shared calendars
-into one link... hand others a version with the private titles hidden") nailed it in well
-under 30s. "No account" + "Nothing is stored on the server" reassured me immediately — that's
-the line I'd actually repeat. This is exactly the merged-subscribable-link thing I've wanted
-for my Asana milestone + release + personal calendars.
+## (a) Advocacy: 8/10
+I'd bring this up in my team's #tools channel. It nailed the exact thing I want: paste a few
+links, get ONE subscribe URL + an "Add to Google Calendar" button, no signup. I merged two
+feeds, copied the URL (copy button worked, gave me the full link), and the feed served fine.
+Not a 9 because (1) it's calendar-only — my real dream is blending my Asana milestone feed +
+a release calendar, and Asana doesn't hand out a clean .ics for milestones, so I'd still be
+stuck on the input side, not this app's fault but it caps my excitement; (2) the on-screen
+"Feed URL" text looked shorter than the actual link — I'd have trusted a copy that the
+displayed string is the whole thing, and a paranoid PM notices that. (3) No "what happens if
+a source feed dies" reassurance up front.
 
-## Value — Yes
-Today I do this with nothing — I keep 3 calendars open in tabs and screenshot dates into
-Notion when someone asks "when's the release?" There is no tool I use that merges feeds into
-a subscribable URL. This is a real time-saver: one link, subscribe once, done. The fact that
-I can label one feed "[Release]" so a shared calendar looks organized is precisely the kind
-of thing that makes me look on top of it — and that's catnip for me.
+## (b) Clarity within 5s: Yes
+Headline "One feed from all your calendars — work, personal, or team" + subtext "Paste 2–5
+calendar links. Get one subscribable feed. No account." told me exactly what it is and that
+it's free/no-login. I'd tell a friend: "paste your calendar links, it spits out one feed URL
+you subscribe to once." The "Hide private titles from shared versions with one checkbox" line
+was a nice bonus I understood instantly.
 
-## Per-feed Options + prefix (the focus)
-- FOUND the Options on cold load with zero hunting: a small "Options" disclosure sits under
-  every feed row. Tapped it, it expanded inline. Clean.
-- Set prefix "[Release] " in the field labelled "Label added to this feed's event titles."
-  After typing, the toggle relabelled to "Options · on" — great little confirmation that the
-  row has customization.
-- DISTINCT from global mask: confirmed. The global "Busy-only privacy mask" literally says
-  "Applies to all feeds. Need it for just one? Use a feed's Options." That one sentence
-  removed all the confusion I'd normally have between global vs per-feed. Per-feed options also
-  carry their OWN mask + hide-all-day, so the split is obvious.
-- It actually WORKS: after Create, result said "Merged 59 events from 2 sources. 1 feed
-  labelled." I checked the live feed — US Holidays titles came out "[Release] New Year's Day"
-  etc., and the un-optioned feed stayed plain. Real, not cosmetic.
+## (c) Value: Yes
+Today I manually subscribe to 3–4 ICS links separately in Google Calendar and there's no
+single shareable merged link — if I send a teammate "my calendars" I send a mess. This makes
+ONE link I can drop in Notion/Slack and look organized, which is literally my motivation. The
+privacy mask ("Busy") is a real unlock for sharing a personal calendar with work people.
 
-## Copy / share
-Both an https Feed URL and a webcal:// URL, each with a Copy button. Tapped Copy → button
-flipped to "Copied!" and the clipboard genuinely held the feed URL (verified). "Add to Google
-Calendar" link + a Preview list of upcoming events with dates means I can sanity-check before
-sharing. This is share-ready, which is the whole reason I'd use it.
+## Per-feed keyword fields — found them COLD? Yes, easily.
+Each feed has a "▸ Options" disclosure right under it. I clicked it without instruction and
+found a clearly-titled "Keywords — this feed only" block with Include (`piano, soccer`) and
+Exclude (`standup, lunch`) fields, plus the line "These ADD to the global keyword filters
+above — an event must pass both." The global "Only include / Exclude events containing"
+fields sit below the feeds and even cross-reference: "Want different keywords per feed? Use
+that feed's Options." That cross-linking is what made it discoverable — A+ wayfinding.
 
-## Nitpicks (minor)
-- The feed URL is a huge opaque token — fine functionally, but on mobile it's an intimidating
-  wall of characters. A "this link IS your config, lose it and rebuild" note exists, which is
-  honest but slightly nervy for a non-technical sharer.
-- I'd love a tiny "share via Slack" or shortened-link nicety since sharing is my whole job,
-  but copy works.
+VERIFIED it actually works (I won't debug, but I did sanity-check as a user): single feed =
+34 events; per-feed Include="Day" dropped it to 32 and every remaining title contained "day".
+Global Exclude="Observed" left 2 "Observed" hits — but those were in DESCRIPTIONS, not
+titles, and the helper text plainly says keywords match TITLES, so that's correct, not a bug.
+Feed URL returns HTTP 200, no console errors anywhere.
 
-## Answers
-(a) Advocacy: 9 — I'd bring this up unprompted in my next standup. It does the one thing I
-    wanted, no signup, and it just worked first try on my phone. Not a 10 only because I
-    haven't yet trusted it across a calendar refresh cycle and the raw token link looks scary.
-(b) Value clear in <30s? YES.
-(c) Biggest blocker: none that stopped me. Closest thing: the long opaque feed-URL token
-    looks fragile/intimidating for sharing, but it copied fine.
+## Top friction
+- Displayed "Feed URL" string appears truncated vs the real (long) token — erodes trust that
+  a manual copy grabbed the whole thing. The Copy button does grab the full URL.
+- Calendar-only inputs; my actual milestone/release feeds (Asana/Amplitude) aren't clean ICS,
+  so the "merge everything I care about" promise stops at calendars.
 
 ```json
-{"tester": 1, "round": 1, "clarity": "Yes", "value": "Yes", "advocacy": 9, "topComplaints": ["Feed URL is a long opaque token that looks fragile/intimidating to share on mobile", "No share-shortcut (Slack/short link) for a share-heavy user"], "priorConcernsAddressed": "n/a"}
+{"tester": 0, "round": 1, "clarity": "Yes", "value": "Yes", "advocacy": 8, "topComplaints": ["Displayed Feed URL text looks truncated vs the real long token — trust hit on manual copy", "Calendar-only: my Asana milestone / release feeds aren't clean ICS so I can't actually merge them"], "priorConcernsAddressed": "n/a"}
 ```

@@ -311,3 +311,209 @@ describe("validateConfig prefix trailing-space regression", () => {
     expect(src.prefix).toBe("W:");
   });
 });
+
+// ─── Per-feed keyword filter tests ────────────────────────────────────────────
+
+describe("per-feed include keyword", () => {
+  it("keeps only matching events from the configured feed, other feeds unaffected", () => {
+    const calA = parseCalendar(FEED_A_ICS);
+    const calB = parseCalendar(FEED_B_ICS);
+    // Feed A include "standup" → only "Daily standup" from A; all of B untouched.
+    const out = mergeCalendars({
+      calendars: [calA, calB],
+      options: {},
+      perFeedOptions: [{ include: "standup" }, {}],
+    });
+    expect(out).toContain("SUMMARY:Daily standup");
+    expect(out).not.toContain("SUMMARY:Quarterly planning"); // A event excluded
+    // Feed B events all present.
+    expect(out).toContain("SUMMARY:Piano lesson");
+    expect(out).toContain("SUMMARY:Holiday gathering");
+    expect(out).toContain("Alice");
+  });
+
+  it("is case-insensitive", () => {
+    const calA = parseCalendar(FEED_A_ICS);
+    const out = mergeCalendars({
+      calendars: [calA],
+      options: {},
+      perFeedOptions: [{ include: "STANDUP" }],
+    });
+    expect(out).toContain("SUMMARY:Daily standup");
+    expect(out).not.toContain("SUMMARY:Quarterly planning");
+  });
+
+  it("empty include = match-all (no events dropped)", () => {
+    const calA = parseCalendar(FEED_A_ICS);
+    const out = mergeCalendars({
+      calendars: [calA],
+      options: {},
+      perFeedOptions: [{ include: "" }],
+    });
+    expect(out).toContain("SUMMARY:Daily standup");
+    expect(out).toContain("SUMMARY:Quarterly planning");
+  });
+
+  it("absent include field = no filter (back-compat: per-feed objects without include are unchanged)", () => {
+    const calA = parseCalendar(FEED_A_ICS);
+    const out = mergeCalendars({
+      calendars: [calA],
+      options: {},
+      perFeedOptions: [{ prefix: "[Work] " }], // no include field
+    });
+    expect(out).toContain("SUMMARY:[Work] Daily standup");
+    expect(out).toContain("SUMMARY:[Work] Quarterly planning");
+  });
+});
+
+describe("per-feed exclude keyword", () => {
+  it("drops only matching events from the configured feed, other feeds unaffected", () => {
+    const calA = parseCalendar(FEED_A_ICS);
+    const calB = parseCalendar(FEED_B_ICS);
+    // Feed A exclude "standup" → "Daily standup" gone from A; B untouched.
+    const out = mergeCalendars({
+      calendars: [calA, calB],
+      options: {},
+      perFeedOptions: [{ exclude: "standup" }, {}],
+    });
+    expect(out).not.toContain("SUMMARY:Daily standup"); // A event dropped
+    expect(out).toContain("SUMMARY:Quarterly planning"); // A event kept
+    // Feed B events all present.
+    expect(out).toContain("SUMMARY:Piano lesson");
+    expect(out).toContain("SUMMARY:Holiday gathering");
+    expect(out).toContain("Alice");
+  });
+
+  it("is case-insensitive", () => {
+    const calA = parseCalendar(FEED_A_ICS);
+    const out = mergeCalendars({
+      calendars: [calA],
+      options: {},
+      perFeedOptions: [{ exclude: "QUARTERLY" }],
+    });
+    expect(out).not.toContain("SUMMARY:Quarterly planning");
+    expect(out).toContain("SUMMARY:Daily standup");
+  });
+
+  it("empty exclude = drop-none (no events dropped)", () => {
+    const calA = parseCalendar(FEED_A_ICS);
+    const out = mergeCalendars({
+      calendars: [calA],
+      options: {},
+      perFeedOptions: [{ exclude: "" }],
+    });
+    expect(out).toContain("SUMMARY:Daily standup");
+    expect(out).toContain("SUMMARY:Quarterly planning");
+  });
+});
+
+describe("per-feed + global keyword compose (AND)", () => {
+  it("an event must pass both per-feed and global filters to appear", () => {
+    // Feed A: per-feed include "standup" (only standup from A)
+    // Global exclude "standup" — event must pass BOTH → nothing from A survives
+    const calA = parseCalendar(FEED_A_ICS);
+    const calB = parseCalendar(FEED_B_ICS);
+    const out = mergeCalendars({
+      calendars: [calA, calB],
+      options: { exclude: "standup" },
+      perFeedOptions: [{ include: "standup" }, {}],
+    });
+    // A: per-feed include "standup" keeps only standup, but global exclude drops it → nothing from A
+    expect(out).not.toContain("SUMMARY:Daily standup");
+    expect(out).not.toContain("SUMMARY:Quarterly planning");
+    // B has no standup events — all pass the global exclude.
+    expect(out).toContain("SUMMARY:Piano lesson");
+    expect(out).toContain("SUMMARY:Holiday gathering");
+  });
+
+  it("global include does not affect a feed with a per-feed include (both must match)", () => {
+    // Feed A: per-feed include "quarterly"; global include "standup"
+    // No event from A can match both → A is empty
+    const calA = parseCalendar(FEED_A_ICS);
+    const calB = parseCalendar(FEED_B_ICS);
+    const out = mergeCalendars({
+      calendars: [calA, calB],
+      options: { include: "standup" },
+      perFeedOptions: [{ include: "quarterly" }, {}],
+    });
+    // A: per-feed include "quarterly" passes Quarterly planning; global include "standup"
+    // then drops it (doesn't contain "standup") → nothing from A
+    expect(out).not.toContain("SUMMARY:Daily standup");
+    expect(out).not.toContain("SUMMARY:Quarterly planning");
+    // B has no standup events — B is entirely dropped by global include "standup".
+    expect(out).not.toContain("SUMMARY:Piano lesson");
+  });
+});
+
+describe("per-feed keyword back-compat", () => {
+  it("legacy string[] config (no per-feed objects) is unchanged — no filtering", () => {
+    const calA = parseCalendar(FEED_A_ICS);
+    const calB = parseCalendar(FEED_B_ICS);
+    const out = mergeCalendars({
+      calendars: [calA, calB],
+      options: {},
+      // perFeedOptions absent — simulates a legacy token
+    });
+    expect(out).toContain("SUMMARY:Daily standup");
+    expect(out).toContain("SUMMARY:Quarterly planning");
+    expect(out).toContain("SUMMARY:Piano lesson");
+    expect(out).toContain("Alice");
+  });
+
+  it("per-feed option objects without include/exclude field = no keyword filtering", () => {
+    const calA = parseCalendar(FEED_A_ICS);
+    const out = mergeCalendars({
+      calendars: [calA],
+      options: {},
+      perFeedOptions: [{ busyOnly: false, hideAllDay: false }], // no include/exclude
+    });
+    expect(out).toContain("SUMMARY:Daily standup");
+    expect(out).toContain("SUMMARY:Quarterly planning");
+  });
+});
+
+describe("validateConfig per-feed keyword fields", () => {
+  it("accepts include and exclude in per-feed object form", () => {
+    const result = validateConfig({
+      sources: [
+        { url: "https://a.example.com/cal.ics", include: "piano", exclude: "standup" },
+      ],
+    });
+    expect(result.ok).toBe(true);
+    const src = normalizeSource(result.config!.sources[0]);
+    expect(src.include).toBe("piano");
+    expect(src.exclude).toBe("standup");
+  });
+
+  it("empty include/exclude string → not stored (treated as absent)", () => {
+    const result = validateConfig({
+      sources: [
+        { url: "https://a.example.com/cal.ics", include: "", exclude: "  " },
+      ],
+    });
+    expect(result.ok).toBe(true);
+    const src = normalizeSource(result.config!.sources[0]);
+    expect(src.include).toBeUndefined();
+    expect(src.exclude).toBeUndefined();
+  });
+
+  it("rejects per-feed filter over 100 chars", () => {
+    const result = validateConfig({
+      sources: [
+        { url: "https://a.example.com/cal.ics", include: "x".repeat(101) },
+      ],
+    });
+    expect(result.ok).toBe(false);
+    expect(result.error).toMatch(/include filter too long/i);
+  });
+
+  it("legacy string source does not gain include/exclude fields", () => {
+    const result = validateConfig({
+      sources: ["https://a.example.com/cal.ics"],
+    });
+    expect(result.ok).toBe(true);
+    const src = normalizeSource(result.config!.sources[0]);
+    expect(src.include).toBeUndefined();
+    expect(src.exclude).toBeUndefined();
+  });
+});

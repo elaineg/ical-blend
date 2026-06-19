@@ -9,6 +9,18 @@ export interface SourceConfig {
   busyOnly?: boolean;
   /** Drop all-day VEVENTs (DATE-valued DTSTART) from this feed only. */
   hideAllDay?: boolean;
+  /**
+   * Per-feed include filter: only events whose SUMMARY contains this keyword
+   * (case-insensitive) pass through from this feed. Empty/absent = no filter.
+   * Parsed identically to the global include field.
+   */
+  include?: string;
+  /**
+   * Per-feed exclude filter: events whose SUMMARY contains this keyword
+   * (case-insensitive) are dropped from this feed. Empty/absent = no filter.
+   * Parsed identically to the global exclude field.
+   */
+  exclude?: string;
 }
 
 export interface BlendConfig {
@@ -127,6 +139,9 @@ export function validateConfig(input: unknown): ValidationResult {
     let busyOnly: boolean | undefined;
     let hideAllDay: boolean | undefined;
 
+    let rawInclude: string | undefined;
+    let rawExclude: string | undefined;
+
     if (typeof raw === "string") {
       rawUrl = raw.trim();
     } else {
@@ -135,6 +150,8 @@ export function validateConfig(input: unknown): ValidationResult {
       prefix = typeof o.prefix === "string" ? o.prefix : undefined;
       busyOnly = o.busyOnly === true ? true : undefined;
       hideAllDay = o.hideAllDay === true ? true : undefined;
+      rawInclude = typeof o.include === "string" ? o.include : undefined;
+      rawExclude = typeof o.exclude === "string" ? o.exclude : undefined;
     }
 
     const urlResult = validateUrl(rawUrl);
@@ -159,6 +176,20 @@ export function validateConfig(input: unknown): ValidationResult {
     }
     if (busyOnly) src.busyOnly = true;
     if (hideAllDay) src.hideAllDay = true;
+
+    // Per-feed keyword filters — same validation logic as global include/exclude.
+    for (const [field, val] of [["include", rawInclude], ["exclude", rawExclude]] as const) {
+      if (val === undefined || val === null || val === "") continue;
+      const trimmed = val.trim();
+      if (trimmed.length === 0) continue;
+      if (trimmed.length > MAX_FILTER_LENGTH) {
+        return {
+          ok: false,
+          error: `Per-feed ${field} filter too long (max ${MAX_FILTER_LENGTH} chars).`,
+        };
+      }
+      src[field] = trimmed;
+    }
 
     sources.push(src);
   }

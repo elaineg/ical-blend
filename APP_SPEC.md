@@ -20,11 +20,17 @@ MergeCal at $2/mo. Nothing free + hosted + no-signup does merge + filter + busy-
    case-insensitively against event SUMMARY), and optionally toggle "busy-only privacy
    mask" (every event's SUMMARY becomes "Busy"; DESCRIPTION, LOCATION, ATTENDEE, and
    ORGANIZER are removed). Each source feed row also has an optional, default-collapsed
-   "Options" disclosure (always shown per row) offering three independent PER-FEED controls:
+   "Options & filters" disclosure (always shown per row, with a collapsed-row hint "prefix · keyword filter · mask"
+   and an inline badge showing active settings) offering four independent PER-FEED controls:
    a title prefix/label prepended to that feed's event titles (e.g. "[Work] "), a per-feed
    "mask this feed's titles" toggle (masks only this feed to "Busy" while other feeds stay
-   detailed — an override of the global mask), and a per-feed "hide all-day events" toggle.
-   These are all-optional and additive; an unconfigured feed behaves exactly as before.
+   detailed — an override of the global mask), a per-feed "hide all-day events" toggle, and a
+   per-feed include-keyword + exclude-keyword pair (matched case-insensitively against that
+   feed's event SUMMARY, parsed exactly like the global keyword fields). Per-feed keyword
+   rules compose with the global filters via AND: a feed's event must pass BOTH that feed's
+   own keyword rules AND the global include/exclude rules to appear; per-feed rules affect
+   only that feed's events. These are all-optional and additive; an unconfigured feed behaves
+   exactly as before.
    Empty/malformed/localhost/link-local/non-http(s) URLs are
    rejected with inline messages. Clicking "Create feed" produces the merged feed URL
    with a copy button (showing "Copied!" on click), a matching `webcal://` variant, a
@@ -48,8 +54,9 @@ MergeCal at $2/mo. Nothing free + hosted + no-signup does merge + filter + busy-
    ~10 upcoming events from the merged result (title, date/time, which filters/mask
    applied) so the user can confirm the filters and mask did what they expect before
    copying the URL into their calendar app. The preview reflects per-feed rules: titles
-   show their feed's prefix already prepended, per-feed-masked feeds appear as "Busy", and
-   all-day events hidden from a feed do not appear.
+   show their feed's prefix already prepended, per-feed-masked feeds appear as "Busy",
+   all-day events hidden from a feed do not appear, and events dropped by a feed's own
+   include/exclude keyword rule do not appear.
 
 ## Success checks
 
@@ -83,10 +90,20 @@ MergeCal at $2/mo. Nothing free + hosted + no-signup does merge + filter + busy-
 - PER-FEED HIDE ALL-DAY: with per-feed "hide all-day events" on for feed A only, no all-day
   VEVENT from feed A appears in the output, while feed A's timed events and ALL of feed B's
   events (including all-day) remain.
+- PER-FEED EXCLUDE: with per-feed exclude-keyword `standup` on feed A only, no VEVENT from
+  feed A whose SUMMARY contains "standup" (any case) appears, while feed B's "standup" events
+  remain in the same merged output.
+- PER-FEED INCLUDE: with per-feed include-keyword `piano` on feed A only, ONLY feed A's
+  VEVENTs whose SUMMARY contains "piano" appear from feed A, while ALL of feed B's events
+  appear unaffected.
+- PER-FEED + GLOBAL COMPOSE (AND): with global exclude `standup` and feed A's per-feed
+  include `piano`, an event survives only if it passes BOTH — feed A shows only piano events
+  with no "standup", and an event matching neither rule set is absent.
 - BACK-COMPAT: a legacy token whose decrypted `config.sources` is a plain `string[]` (no
-  per-feed option objects) merges to byte-for-byte the same result as before this feature —
-  curl/node-ical on such a token shows no prefixes, no per-feed masking, and no dropped
-  all-day events.
+  per-feed option objects), AND a token whose per-feed option objects lack the new keyword
+  fields, each merge to byte-for-byte the same result as before this feature — curl/node-ical
+  on such a token shows no prefixes, no per-feed masking, no dropped all-day events, and no
+  per-feed keyword filtering.
 - The builder page works with no login: a fresh incognito browser can complete flow 1 and
   see the flow 3 preview.
 

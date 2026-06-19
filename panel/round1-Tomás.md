@@ -1,58 +1,50 @@
-# Tomás — Operations Analyst (Excel/Tableau/Jira/Teams, Edge on locked-down Windows laptop)
+# Round 1 — Tomás (Operations Analyst, Excel/Tableau/Jira/Teams, Edge on locked-down Windows)
 
-Round 1. Tested live in browser at 1366px. My job: merge my Teams/Outlook work feed with a
-shared facilities/shift feed, and hand a vendor a *stripped* version of the sensitive one.
+## (b) Clarity — YES
+Within 5 seconds I knew exactly what this is. The H1 "One feed from all your calendars —
+work, personal, or team" plus "Paste 2–5 calendar links. Get one subscribable feed. No
+account." nails it. The "No account" and the bottom line "Your source URLs are encrypted
+into the feed link and fetched server-side... never stored persistently" are the two phrases
+that made me, a guy wary of pasting an internal feed URL into a random site, willing to keep
+going. The "Busy-only privacy mask" checkbox with "descriptions, locations and attendees are
+stripped" is the exact thing I came for.
 
-## What I did
-Added US Holidays (masked) + a second holiday feed (prefix "[CA] ", left readable), opened
-the per-feed Options, created the merged feed, read the preview, copied the URL, and
-fetched the raw .ics to see what a vendor would actually receive.
+## (c) Value — YES
+Today I either subscribe to feeds one-by-one in Outlook/Teams (which won't merge a vendor a
+single stripped link) or I'd ask IT, who'd block it. There is no Excel/Tableau workaround for
+"hand a vendor a busy-only version of my work calendar." This does it in one session, no
+install (IT blocks installs — browser tool is the whole appeal), no login. The merge worked:
+2 holiday feeds → one .ics with a copyable URL + webcal + "Add to Google Calendar" + a
+"Preview — exactly what subscribers see" pane. That preview is what closes the trust gap for me.
 
-## Clarity — YES
-I'd tell a friend: "Paste 2–5 calendar links, get back one feed URL you subscribe to once —
-and you can hand someone else a copy with the private titles blanked to 'Busy'." The H1
-"Stop checking three calendars" + the subhead "hand others a version with the private
-titles hidden" nailed my use case in well under 30 seconds. The footer line "Nothing is
-stored on the server — the feed URL itself carries your encrypted configuration" is exactly
-the reassurance a data-wary person like me looks for, and it's plausible (the URL is a long
-opaque blob). Good.
+## Per-feed keyword fields — FOUND COLD, and they work
+Yes, I found them cold. Each feed has an "Options" disclosure; opening it shows
+"Keywords — this feed only / Include / Exclude" with placeholders `piano, soccer` and
+`standup, lunch`, and the line "These ADD to the global keyword filters above — an event must
+pass both." That sentence is what told me per-feed AND global compose. After saving, the
+collapsed label reads "Options · on" so I can see at a glance which feed has filters — good.
 
-## Value — YES
-Today I do this by hand: I keep my Outlook calendar and a shared SharePoint/Teams facilities
-list side by side and eyeball them, or beg IT for a combined view. There is NO clean way to
-give a vendor a redacted feed — I'd manually rebuild a stripped calendar in Excel and export
-it, which I won't do weekly. This collapses that into one paste. The killer detail: I masked
-ONLY the US feed and it shows "Busy" in the preview, while the other feed shows "[CA] Canada
-Day" fully readable, with the summary correctly stating "1 feed labelled. 1 feed masked." I
-pulled the raw .ics myself: masked events are scrubbed to bare `SUMMARY:Busy`, no
-DESCRIPTION/LOCATION, even a fresh anonymized UID — the readable feed keeps its detail. That
-is precisely the per-feed split I need, and it's genuinely DISTINCT from the global "Busy-only
-privacy mask" (which the UI even cross-references: "Applies to all feeds. Need it for just
-one? Use a feed's Options."). That one sentence is what made the two non-confusing.
+I VERIFIED behavior, not just UI: I put 2 feeds (US + Canada holidays), set the US feed's
+per-feed EXCLUDE = "Day" and the GLOBAL include = "Day", created the feed, and curled the
+generated .ics. Result: every US "...Day" event was dropped, Canada "...Day" events kept —
+exactly the AND composition the helper text promised. Global filter alone and per-feed alone
+both fired correctly.
 
-## Things that worked well
-- Per-feed Options were findable on cold load (a small "Options" toggle under every row).
-- After I set one, the toggle relabels to "Options · on" — clear cue something's configured.
-- "Copy" → "Copied!" fired and the clipboard genuinely held the feed URL. Verified.
-- When my second feed (a Google ICS) got rate-limited (HTTP 429 on Google's side, not the
-  app), it degraded gracefully: built the feed anyway and said "Source could not be fetched
-  ... will retry each refresh." That's the right behavior; an ops person trusts that.
+## Blockers / friction (minor)
+- Keyword match is SUBSTRING, not word-boundary: include "Day" also kept "Holiday" (contains
+  "day"). Fine once you know, but a non-power-user pasting "PM" could nuke unrelated titles.
+  A one-line note ("matches anywhere in the title") would prevent foot-guns.
+- The generated feed URL is plain text, not in a copy-input — there IS a "Copy" button so it's
+  fine, but I couldn't grab it programmatically; minor.
+- I'd want explicit reassurance that the per-feed mask hides titles for ONE feed while keeping
+  others detailed — the Options copy says exactly that, so this is satisfied, noting for record.
 
-## Advocacy — 8/10
-I'd recommend it to colleagues who juggle work + shared calendars, and I'd bring up the
-per-feed mask specifically to anyone dealing with vendors. Not a 9 because: (1) "Create feed"
-sat on "Creating…" for several seconds while it fetched live feeds, with no progress hint —
-on a slow corporate VPN I'd wonder if it hung. (2) The big trust question for MY scenario is
-unanswered on-page: when I paste my real internal Outlook/Teams feed URL, does the server
-ever log or persist that source URL? "Nothing is stored" reassures about the *output* config,
-but I want one explicit line that the source URLs and their fetched contents aren't logged —
-that's the difference between me trying it and me actually pasting an internal feed.
-
-(a) Advocacy: 8/10
-(b) Value clear in <30s: YES
-(c) Biggest blocker: no explicit promise that my *pasted source feed URL* isn't logged/stored
-    server-side — for a vendor handoff with an internal feed, that's the one fear that stops me.
+## Scores
+(a) Advocacy: 8/10. I'd bring this up unprompted to a peer who needs to share a stripped
+calendar with a vendor — that's a real, recurring ops pain with no clean alternative. Not a 9
+only because the substring-match gotcha and "is this REALLY safe with an internal corporate
+feed URL" residual caution would make me test it once myself before recommending company-wide.
 
 ```json
-{"tester": 1, "round": 1, "clarity": "Yes", "value": "Yes", "advocacy": 8, "topComplaints": ["No explicit guarantee that pasted SOURCE feed URLs aren't logged/stored server-side — key fear for handing a vendor an internal feed", "'Creating…' hangs several seconds with no progress indicator; on a slow VPN it looks broken"], "priorConcernsAddressed": "n/a"}
+{"tester": 4, "round": 1, "clarity": "Yes", "value": "Yes", "advocacy": 8, "topComplaints": ["keyword match is substring not word-boundary — 'Day' also matched 'Holiday'; no inline note warning of over-matching", "residual trust caution about pasting an internal/corporate feed URL despite the 'encrypted, not stored' line"], "priorConcernsAddressed": "n/a"}
 ```

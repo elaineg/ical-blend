@@ -79,6 +79,8 @@ export async function buildBlend(config: BlendConfig): Promise<BlendResult> {
         prefix: src.prefix,
         busyOnly: src.busyOnly,
         hideAllDay: src.hideAllDay,
+        include: src.include,
+        exclude: src.exclude,
       });
     } else {
       const idx1 = i + 1;

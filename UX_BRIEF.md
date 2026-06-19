@@ -32,13 +32,15 @@ that did exactly what you asked.
   subscribe instructions for Apple Calendar, Outlook / Office 365, and Google.
 
 ## 4b. Per-feed rules (advanced merge — this iteration)
-- **Each feed row gets its own "Options" disclosure, always visible from cold load.** Render a
-  small, low-key per-row affordance (a text/disclosure toggle labelled "Options", an inline
+- **Each feed row gets its own "Options & filters" disclosure, always visible from cold load.** Render a
+  small, low-key per-row affordance (a text/disclosure toggle labelled "Options & filters", an inline
   triangle/▸ caret) directly under or beside every source-URL input — on EVERY row, including
   empty ones (do NOT gate it on the URL being filled: optional-ui-gated-on-data-presence).
-  Default collapsed. The row stays a clean URL field by default so the 5-second story
-  ("paste feeds → get one URL") is untouched at 2–5 feeds.
-- **Expanding "Options" reveals three optional per-feed controls**, stacked, indented under
+  Default collapsed. On the collapsed row, show a "prefix · keyword filter · mask" micro-hint
+  so cold users know filtering lives there; when any option is active, show an inline badge
+  summarising the first active setting(s). The row stays a clean URL field by default so the
+  5-second story ("paste feeds → get one URL") is untouched at 2–5 feeds.
+- **Expanding "Options" reveals four optional per-feed controls**, stacked, indented under
   that feed's URL so the grouping is obvious:
   1. **Title prefix** — short text input, label "Label added to this feed's event titles",
      placeholder e.g. `[Work] `. Prepended verbatim to every event title from this feed only.
@@ -47,21 +49,40 @@ that did exactly what you asked.
      other feeds detailed." This is a per-feed override of the global mask.
   3. **Hide all-day events from this feed** — checkbox; helper: "Drop birthdays/holidays and
      other all-day items from this feed."
+  4. **Keywords (this feed only)** — a labelled SUB-GROUP holding TWO co-located text inputs,
+     "Include" and "Exclude", side-by-side on desktop and stacked at 375px. Mirror the GLOBAL
+     keyword fields' labels/placeholders verbatim (e.g. Include placeholder "piano, soccer",
+     Exclude placeholder "standup, lunch") so the per-feed pair is instantly recognised as the
+     same kind of control, just scoped. Sub-group heading: "Keywords — this feed only".
+     Helper under the pair: "Only this feed's events are filtered. These ADD to the global
+     keyword filters above — an event must pass both." Same comma-separated parsing as the
+     global fields. The two inputs MUST render and be usable at 375px in build #1
+     (new-affordance-must-render-at-375px); never split the pair across separate rows/sections
+     (two-related-controls-split).
 - **Global vs per-feed legibility.** Keep the global keyword filters + global "Busy-only privacy
   mask" exactly where they are. Add one quiet line under the global mask: "Applies to all feeds.
   Need it for just one? Use a feed's Options." So the two masks read as scope levels, not as a
-  duplicated/broken control.
+  duplicated/broken control. Likewise add a quiet line under the global keyword fields:
+  "Applies to all feeds. Want different keywords per feed? Use that feed's Options." The
+  per-feed keyword pair must be visually distinct from (and clearly subordinate to / scoped
+  under) the global keyword fields so a user never mistakes one for the other or wonders why a
+  globally-excluded term still needs a per-feed rule — they compose, they don't replace
+  (addresses added-feature-buried, seen 14x).
 - **A configured feed signals itself.** When a feed has any per-feed option set, keep its
   "Options" affordance showing a subtle "on" state (e.g. "Options · on" or a filled caret) so the
   user knows config is applied even while collapsed — no silent state.
 - **Preview reflects per-feed rules (flow 3).** The ~10-event preview must show each event with
-  its feed's prefix already prepended to the title, per-feed-masked feeds shown as "Busy", and
-  hidden all-day events absent — so the user verifies origin labels and masks before subscribing.
+  its feed's prefix already prepended to the title, per-feed-masked feeds shown as "Busy",
+  hidden all-day events absent, AND per-feed keyword filtering already applied (events dropped
+  by a feed's own include/exclude rule are absent from the preview) — so the user verifies
+  origin labels, masks, and filters before subscribing.
   Where space allows, the preview-applied summary line may note "2 feeds labelled · 1 feed masked".
 - **Purely additive / back-compat.** Per-feed options are all-optional and absent by default; an
   un-configured feed must look and behave exactly as today (never "broken"). Legacy already-
   subscribed feed URLs (token config with a plain list of source URLs, no per-feed objects) keep
-  working unchanged — this feature only adds, never alters, existing behaviour.
+  working unchanged — this feature only adds, never alters, existing behaviour. Per-feed
+  option objects from before this feature that LACK the new keyword fields must merge
+  byte-for-byte identically (empty/absent keyword fields = no filter).
 
 ## 5. Craft notes (Aisha — product designer)
 - **Empty state:** the pre-filled example IS the empty state — never a blank box. The preview
